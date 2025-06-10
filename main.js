@@ -33,14 +33,41 @@ function entrarNaFila() {
     turma: turma,
     timestamp: Date.now()
   };
+// Referência da fila
+  const filaRef = db.ref("fila");
 
-  const id = db.ref().child('fila').push().key;
+  filaRef.once("value").then(snapshot => {
+    const fila = snapshot.val();
+    const ids = fila ? Object.keys(fila) : [];
 
-  db.ref('fila/' + id).set(usuario)
-    .then(() => {
-      alert("Você entrou na fila! Aguardando pareamento...");
-    })
-    .catch((error) => {
-      console.error("Erro ao entrar na fila:", error);
-    });
+    // Se tiver alguém esperando, fazer pareamento
+    if (ids.length > 0) {
+      const outroId = ids[0];
+      const outroUsuario = fila[outroId];
+
+      // Criar uma sala para os dois
+      const novaSalaRef = db.ref("salas").push();
+      novaSalaRef.set({
+        usuario1: outroUsuario,
+        usuario2: usuario,
+        timestamp: Date.now()
+      });
+
+      // Remover ambos da fila
+      filaRef.child(outroId).remove();
+
+      alert("Você foi pareado com " + outroUsuario.nome + "!");
+
+    } else {
+      // Ninguém esperando: adiciona à fila
+      const novoId = filaRef.push().key;
+      filaRef.child(novoId).set(usuario)
+        .then(() => {
+          alert("Você entrou na fila! Aguardando pareamento...");
+        })
+        .catch((error) => {
+          console.error("Erro ao entrar na fila:", error);
+        });
+    }
+  });
 }
