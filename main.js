@@ -62,12 +62,22 @@ function entrarNaFila() {
       // Ninguém esperando: adiciona à fila
       const novoId = filaRef.push().key;
       filaRef.child(novoId).set(usuario)
-        .then(() => {
-          alert("Você entrou na fila! Aguardando pareamento...");
-        })
-        .catch((error) => {
-          console.error("Erro ao entrar na fila:", error);
-        });
-    }
+  .then(() => {
+    alert("Você entrou na fila! Aguardando pareamento...");
+
+    // Fica escutando as salas para ver se esse usuário foi pareado
+    db.ref("salas").on("child_added", (snapshot) => {
+      const sala = snapshot.val();
+      if (
+        (sala.usuario1 && sala.usuario1.nome === nome && sala.usuario1.turma === turma) ||
+        (sala.usuario2 && sala.usuario2.nome === nome && sala.usuario2.turma === turma)
+      ) {
+        alert("Você foi pareado com " + (sala.usuario1.nome === nome ? sala.usuario2.nome : sala.usuario1.nome) + "!");
+        // Opcional: parar de escutar depois que foi pareado
+        db.ref("salas").off();
+      }
+    });
+  })
+  .catch((error) => {
+    console.error("Erro ao entrar na fila:", error);
   });
-}
