@@ -1,102 +1,137 @@
  // Configuração do Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyAzRbmT3ImY25mKsNLOAh7xBWku7ph7gzM",
-    authDomain: "meioa-meio.firebaseapp.com",
-    databaseURL: "https://meioa-meio-default-rtdb.firebaseio.com",
-    projectId: "meioa-meio",
-    storageBucket: "meioa-meio.firebasestorage.app",
-    messagingSenderId: "38003308982",
-    appId: "1:38003308982:web:86baa0f86f5e534621e917"
+const firebaseConfig = {
+  apiKey: "AIzaSyAzRbmT3ImY25mKsNLOAh7xBWku7ph7gzM",
+  authDomain: "meioa-meio.firebaseapp.com",
+  databaseURL: "https://meioa-meio-default-rtdb.firebaseio.com",
+  projectId: "meioa-meio",
+  storageBucket: "meioa-meio.firebasestorage.app",
+  messagingSenderId: "38003308982",
+  appId: "1:38003308982:web:86baa0f86f5e534621e917"
+};
+
+// Inicializa o Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+firebase.auth().signInAnonymously().then(() => {
+  console.log("Conectado anonimamente");
+});
+
+function entrarNaFila() {
+  const nomeOriginal = document.getElementById("nome").value.trim();
+  const turmaOriginal = document.getElementById("turma").value.trim();
+
+  const nome = nomeOriginal.toLowerCase();
+  const turma = turmaOriginal.toLowerCase();
+
+  if (!nome || !turma) {
+    alert("Preencha seu nome e sua turma.");
+    return;
+  }
+
+  const usuario = {
+    nome,
+    turma,
+    nomeOriginal,
+    turmaOriginal,
+    timestamp: Date.now()
   };
 
-  // Inicializa o Firebase
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+  const filaRef = db.ref("fila");
+  const salasRef = db.ref("salas");
 
-  firebase.auth().signInAnonymously().then(() => {
-    console.log("Conectado anonimamente");
-  });
+  // Verificar se o usuário já está em alguma sala
+  salasRef.once("value").then((salasSnapshot) => {
+    const salas = salasSnapshot.val();
+    let jaEstaEmSala = false;
 
-  // Função chamada quando o botão é clicado
-  function entrarNaFila() {
-    // 🟢 Padronizar nome e turma
-    const nome = document.getElementById("nome").value.trim().toLowerCase();
-    const turma = document.getElementById("turma").value.trim().toLowerCase();
+    if (salas) {
+      Object.values(salas).forEach(sala => {
+        const u1 = sala.usuario1;
+        const u2 = sala.usuario2;
 
-    if (!nome || !turma) {
-      alert("Preencha seu nome e sua turma.");
+        if (
+          (u1?.nome === nome && u1?.turma === turma) ||
+          (u2?.nome === nome && u2?.turma === turma)
+        ) {
+          jaEstaEmSala = true;
+        }
+      });
+    }
+
+    if (jaEstaEmSala) {
+      alert("Você já está pareado com alguém!");
       return;
     }
 
-    const usuario = {
-      nome,
-      turma,
-      timestamp: Date.now()
-    };
-
-    const filaRef = db.ref("fila");
-
     filaRef.once("value").then(snapshot => {
       const fila = snapshot.val();
+
+      // Montar fila ordenada por ordem de chegada (timestamp)
       const filaArray = fila
         ? Object.entries(fila)
             .map(([id, dados]) => ({ id, ...dados }))
             .sort((a, b) => a.timestamp - b.timestamp)
         : [];
 
-      // 🟢 Evitar parear consigo mesmo
-      const outroUsuario = filaArray.find(u => u.nome !== nome || u.turma !== turma);
+      // Filtrar usuários diferentes de mim e que não estão em sala
+      const candidato = filaArray.find(u =>
+        (u.nome !== nome || u.turma !== turma) &&
+        !(salas && Object.values(salas).some(sala =>
+          (sala.usuario1?.nome === u.nome && sala.usuario1?.turma === u.turma) ||
+          (sala.usuario2?.nome === u.nome && sala.usuario2?.turma === u.turma)
+        ))
+      );
 
-      if (outroUsuario) {
-        const outroId = outroUsuario.id;
-
-        const novaSalaRef = db.ref("salas").push();
-        novaSalaRef.set({
+      if (candidato) {
+        // Encontrou alguém válido para parear
+        const novaSala = {
           usuario1: {
-            nome: outroUsuario.nome,
-            turma: outroUsuario.turma,
-            timestamp: outroUsuario.timestamp
+            nome: candidato.nome,
+            turma: candidato.turma,
+            nomeOriginal: candidato.nomeOriginal || candidato.nome,
+            turmaOriginal: candidato.turmaOriginal || candidato.turma,
+            timestamp: candidato.timestamp
           },
           usuario2: usuario,
           timestamp: Date.now()
-        });
+        };
 
-        filaRef.child(outroId).remove();
-
-        alert("Você foi pareado com " + outroUsuario.nome + "!");
+        db.ref("salas").push(novaSala);
+        filaRef.child(candidato.id).remove();
+        alert("Você foi pareado com " + (candidato.nomeOriginal || candidato.nome) + "!");
       } else {
-        const novoId = filaRef.push().key;
-        filaRef.child(novoId).set(usuario)
-          .then(() => {
-            alert("Você entrou na fila! Aguardando pareamento...");
+        // Ninguém na fila: adiciona e escuta
+        const meuId = filaRef.push().key;
+        filaRef.child(meuId).set(usuario).then(() => {
+          alert("Você entrou na fila! Aguardando pareamento...");
 
-            // 🟢 Evitar múltiplos alerts
-            const salasRef = db.ref("salas");
-            let foiPareado = false;
+          let foiPareado = false;
 
-            const listener = salasRef.on("child_added", (snapshot) => {
-              if (foiPareado) return;
+          const listener = salasRef.on("child_added", snapshot => {
+            if (foiPareado) return;
 
-              const sala = snapshot.val();
-              const ehUsuario = (
-                (sala.usuario1?.nome === nome && sala.usuario1?.turma === turma) ||
-                (sala.usuario2?.nome === nome && sala.usuario2?.turma === turma)
-              );
+            const sala = snapshot.val();
+            const u1 = sala.usuario1;
+            const u2 = sala.usuario2;
 
-              if (ehUsuario) {
-                foiPareado = true;
-                salasRef.off("child_added", listener);
-                const parceiro = sala.usuario1.nome === nome ? sala.usuario2 : sala.usuario1;
-                alert("Você foi pareado com " + parceiro.nome + "!");
-              }
-            });
-          })
-          .catch((error) => {
-            console.error("Erro ao entrar na fila:", error);
+            if (
+              (u1?.nome === nome && u1?.turma === turma) ||
+              (u2?.nome === nome && u2?.turma === turma)
+            ) {
+              foiPareado = true;
+              salasRef.off("child_added", listener);
+              filaRef.child(meuId).remove();
+
+              const parceiro = u1.nome === nome ? u2 : u1;
+              alert("Você foi pareado com " + (parceiro.nomeOriginal || parceiro.nome) + "!");
+            }
           });
+        });
       }
     });
-  }
+  });
+}
 
-  // Exporta a função para ser chamada pelo botão
-  window.entrarNaFila = entrarNaFila;
+// Disponibiliza a função globalmente
+window.entrarNaFila = entrarNaFila;
