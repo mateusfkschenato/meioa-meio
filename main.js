@@ -100,6 +100,20 @@ function entrarNaFila() {
         db.ref("salas").push(novaSala);
         filaRef.child(candidato.id).remove();
         alert("Você foi pareado com " + (candidato.nomeOriginal || candidato.nome) + "!");
+
+// Também remove o próprio nome da fila, caso esteja lá
+filaRef.once("value").then(snapshot => {
+  const filaAtual = snapshot.val();
+  if (filaAtual) {
+    const meuId = Object.entries(filaAtual).find(([id, dados]) =>
+      dados.nome === nome && dados.turma === turma
+    )?.[0];
+
+    if (meuId) {
+      filaRef.child(meuId).remove();
+    }
+  }
+});
       } else {
         // Ninguém na fila: adiciona e escuta
         const meuId = filaRef.push().key;
