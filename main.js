@@ -1,5 +1,4 @@
-<script type="module">
-  // Configuração do Firebase
+ // Configuração do Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyAzRbmT3ImY25mKsNLOAh7xBWku7ph7gzM",
     authDomain: "meioa-meio.firebaseapp.com",
@@ -101,4 +100,3 @@
 
   // Exporta a função para ser chamada pelo botão
   window.entrarNaFila = entrarNaFila;
-</script>
