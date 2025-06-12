@@ -12,12 +12,9 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let meuUid = null;
-
-firebase.auth().signInAnonymously().then((userCredential) => {
-  meuUid = userCredential.user.uid;
-  console.log("Conectado com UID:", meuUid);
-});
+// ID aleatório temporário para diferenciar acessos, mesmo com nome repetido
+const idTemporario = Math.random().toString(36).substring(2) + Date.now();
+console.log("ID Temporário:", idTemporario);
 
 function entrarNaFila() {
   const nomeOriginal = document.getElementById("nome").value.trim();
@@ -32,7 +29,7 @@ function entrarNaFila() {
   }
 
   const usuario = {
-    uid: meuUid,
+    id: idTemporario,
     nome,
     turma,
     nomeOriginal,
@@ -52,7 +49,7 @@ function entrarNaFila() {
         const u1 = sala.usuario1;
         const u2 = sala.usuario2;
 
-        if (u1?.uid === meuUid || u2?.uid === meuUid) {
+        if (u1?.id === idTemporario || u2?.id === idTemporario) {
           jaEstaEmSala = true;
         }
       });
@@ -68,21 +65,21 @@ function entrarNaFila() {
 
       const filaArray = fila
         ? Object.entries(fila)
-            .map(([id, dados]) => ({ id, ...dados }))
+            .map(([id, dados]) => ({ idFirebase: id, ...dados }))
             .sort((a, b) => a.timestamp - b.timestamp)
         : [];
 
       const candidato = filaArray.find(u =>
-        u.uid !== meuUid &&
+        u.id !== idTemporario &&
         !(salas && Object.values(salas).some(sala =>
-          sala.usuario1?.uid === u.uid || sala.usuario2?.uid === u.uid
+          sala.usuario1?.id === u.id || sala.usuario2?.id === u.id
         ))
       );
 
       if (candidato) {
         const novaSala = {
           usuario1: {
-            uid: candidato.uid,
+            id: candidato.id,
             nome: candidato.nome,
             turma: candidato.turma,
             nomeOriginal: candidato.nomeOriginal || candidato.nome,
@@ -90,7 +87,7 @@ function entrarNaFila() {
             timestamp: candidato.timestamp
           },
           usuario2: {
-            uid: usuario.uid,
+            id: usuario.id,
             nome: usuario.nome,
             turma: usuario.turma,
             nomeOriginal: usuario.nomeOriginal,
@@ -101,16 +98,16 @@ function entrarNaFila() {
         };
 
         db.ref("salas").push(novaSala);
-        filaRef.child(candidato.id).remove();
+        filaRef.child(candidato.idFirebase).remove();
 
         alert("Você foi pareado com " + (candidato.nomeOriginal || candidato.nome) + "!");
 
-        // Remover o próprio usuário da fila, se ainda estiver
+        // Remove a si mesmo da fila caso ainda esteja
         filaRef.once("value").then(snapshot => {
           const filaAtual = snapshot.val();
           if (filaAtual) {
             const meuId = Object.entries(filaAtual).find(([id, dados]) =>
-              dados.uid === meuUid
+              dados.id === idTemporario
             )?.[0];
 
             if (meuId) {
@@ -133,12 +130,12 @@ function entrarNaFila() {
             const u1 = sala.usuario1;
             const u2 = sala.usuario2;
 
-            if (u1?.uid === meuUid || u2?.uid === meuUid) {
+            if (u1?.id === idTemporario || u2?.id === idTemporario) {
               foiPareado = true;
               salasRef.off("child_added", listener);
               filaRef.child(meuId).remove();
 
-              const parceiro = u1.uid === meuUid ? u2 : u1;
+              const parceiro = u1.id === idTemporario ? u2 : u1;
               alert("Você foi pareado com " + (parceiro.nomeOriginal || parceiro.nome) + "!");
             }
           });
