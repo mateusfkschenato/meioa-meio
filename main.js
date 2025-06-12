@@ -100,7 +100,10 @@ function entrarNaFila() {
         db.ref("salas").push(novaSala);
         filaRef.child(candidato.idFirebase).remove();
 
-        alert("Você foi pareado com " + (candidato.nomeOriginal || candidato.nome) + "!");
+        const salaRef = db.ref("salas").push(novaSala);
+const salaId = salaRef.key;
+mostrarChat(salaId, candidato.nomeOriginal || candidato.nome);
+
 
         // Remove a si mesmo da fila caso ainda esteja
         filaRef.once("value").then(snapshot => {
@@ -136,7 +139,9 @@ function entrarNaFila() {
               filaRef.child(meuId).remove();
 
               const parceiro = u1.id === idTemporario ? u2 : u1;
-              alert("Você foi pareado com " + (parceiro.nomeOriginal || parceiro.nome) + "!");
+             const salaId = snapshot.key;
+mostrarChat(salaId, parceiro.nomeOriginal || parceiro.nome);
+
             }
           });
         });
@@ -146,3 +151,41 @@ function entrarNaFila() {
 }
 
 window.entrarNaFila = entrarNaFila;
+function mostrarChat(salaId, parceiroNome) {
+  document.getElementById("chatArea").style.display = "block";
+  document.getElementById("mensagens").innerHTML = "";
+  window.salaIdAtiva = salaId;
+
+  const mensagensRef = db.ref("salas/" + salaId + "/mensagens");
+
+  mensagensRef.on("child_added", (snapshot) => {
+    const msg = snapshot.val();
+    const div = document.createElement("div");
+    div.textContent = msg.autor + ": " + msg.texto;
+    document.getElementById("mensagens").appendChild(div);
+    document.getElementById("mensagens").scrollTop = document.getElementById("mensagens").scrollHeight;
+  });
+}
+
+function enviarMensagem() {
+  const input = document.getElementById("msgInput");
+  const texto = input.value.trim();
+  if (!texto) return;
+
+  db.ref("salas/" + window.salaIdAtiva + "/mensagens").push({
+    texto,
+    autor: nomeOriginal,
+    timestamp: Date.now()
+  });
+
+  input.value = "";
+}
+
+function sairDoChat() {
+  if (window.salaIdAtiva) {
+    db.ref("salas/" + window.salaIdAtiva + "/mensagens").off();
+    document.getElementById("chatArea").style.display = "none";
+    window.salaIdAtiva = null;
+    alert("Você saiu do chat.");
+  }
+}
