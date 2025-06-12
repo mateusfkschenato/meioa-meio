@@ -153,6 +153,8 @@ mostrarChat(salaId, parceiro.nomeOriginal || parceiro.nome);
 window.entrarNaFila = entrarNaFila;
 function mostrarChat(salaId, parceiroNome) {
   document.getElementById("chatArea").style.display = "block";
+document.getElementById("chatTitulo").textContent = "Chat com seu parceiro (" + parceiroNome + ")";
+
   document.getElementById("mensagens").innerHTML = "";
   window.salaIdAtiva = salaId;
 
@@ -189,3 +191,5 @@ function sairDoChat() {
     alert("Você saiu do chat.");
   }
 }
+window.enviarMensagem = enviarMensagem;
+window.sairDoChat = sairDoChat;
