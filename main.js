@@ -29,13 +29,17 @@ function entrarNaFila() {
   }
 
   const usuario = {
-    id: idTemporario,
-    nome,
-    turma,
-    nomeOriginal,
-    turmaOriginal,
-    timestamp: Date.now()
-  };
+  id: idTemporario,
+  nome,
+  turma,
+  nomeOriginal,
+  turmaOriginal,
+  timestamp: Date.now()
+};
+
+// salva globalmente para uso no chat
+window.nomeOriginalGlobal = nomeOriginal;
+
 
   const filaRef = db.ref("fila");
   const salasRef = db.ref("salas");
@@ -176,12 +180,13 @@ function enviarMensagem() {
 
   db.ref("salas/" + window.salaIdAtiva + "/mensagens").push({
     texto,
-    autor: nomeOriginal,
+    autor: window.nomeOriginalGlobal,
     timestamp: Date.now()
   });
 
   input.value = "";
 }
+
 
 function sairDoChat() {
   if (window.salaIdAtiva) {
