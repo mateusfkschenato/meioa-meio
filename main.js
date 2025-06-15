@@ -12,7 +12,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// ID aleatório temporário para diferenciar acessos, mesmo com nome repetido
 const idTemporario = Math.random().toString(36).substring(2) + Date.now();
 console.log("ID Temporário:", idTemporario);
 
@@ -29,17 +28,15 @@ function entrarNaFila() {
   }
 
   const usuario = {
-  id: idTemporario,
-  nome,
-  turma,
-  nomeOriginal,
-  turmaOriginal,
-  timestamp: Date.now()
-};
+    id: idTemporario,
+    nome,
+    turma,
+    nomeOriginal,
+    turmaOriginal,
+    timestamp: Date.now()
+  };
 
-// salva globalmente para uso no chat
-window.nomeOriginalGlobal = nomeOriginal;
-
+  window.nomeOriginalGlobal = nomeOriginal;
 
   const filaRef = db.ref("fila");
   const salasRef = db.ref("salas");
@@ -102,25 +99,9 @@ window.nomeOriginalGlobal = nomeOriginal;
         };
 
         const salaRef = db.ref("salas").push(novaSala);
-const salaId = salaRef.key;
-filaRef.child(candidato.idFirebase).remove();
-mostrarChat(salaId, candidato.nomeOriginal || candidato.nome);
-
-
-
-        // Remove a si mesmo da fila caso ainda esteja
-        filaRef.once("value").then(snapshot => {
-          const filaAtual = snapshot.val();
-          if (filaAtual) {
-            const meuId = Object.entries(filaAtual).find(([id, dados]) =>
-              dados.id === idTemporario
-            )?.[0];
-
-            if (meuId) {
-              filaRef.child(meuId).remove();
-            }
-          }
-        });
+        const salaId = salaRef.key;
+        filaRef.child(candidato.idFirebase).remove();
+        mostrarChat(salaId, candidato.nomeOriginal || candidato.nome, candidato.turmaOriginal || candidato.turma);
 
       } else {
         const meuId = filaRef.push().key;
@@ -130,37 +111,32 @@ mostrarChat(salaId, candidato.nomeOriginal || candidato.nome);
           let foiPareado = false;
 
           const listener = salasRef.on("child_added", (snapshot) => {
-  if (foiPareado) return;
+            if (foiPareado) return;
 
-  const sala = snapshot.val();
-  const salaId = snapshot.key; // 🟢 pega a chave da sala
-  const u1 = sala.usuario1;
-  const u2 = sala.usuario2;
+            const sala = snapshot.val();
+            const salaId = snapshot.key;
+            const u1 = sala.usuario1;
+            const u2 = sala.usuario2;
 
-  if (u1?.id === idTemporario || u2?.id === idTemporario) {
-    foiPareado = true;
-    salasRef.off("child_added", listener);
-    filaRef.child(meuId).remove();
+            if (u1?.id === idTemporario || u2?.id === idTemporario) {
+              foiPareado = true;
+              salasRef.off("child_added", listener);
+              filaRef.child(meuId).remove();
 
-    const parceiro = u1.id === idTemporario ? u2 : u1;
-
-    // 🟢 ativa o chat para quem entrou na sala depois
-    mostrarChat(salaId, parceiro.nomeOriginal || parceiro.nome);
-  }
-});
-
+              const parceiro = u1.id === idTemporario ? u2 : u1;
+              mostrarChat(salaId, parceiro.nomeOriginal || parceiro.nome, parceiro.turmaOriginal || parceiro.turma);
+            }
+          });
         });
       }
     });
   });
 }
 
-window.entrarNaFila = entrarNaFila;
-function mostrarChat(salaId, parceiroNome) {
+function mostrarChat(salaId, parceiroNome, parceiroTurma) {
   document.getElementById("chatArea").style.display = "block";
-document.getElementById("chatTitulo").textContent = "Chat com seu parceiro (" + parceiroNome + ")";
-
   document.getElementById("mensagens").innerHTML = "";
+  document.getElementById("chatTitulo").textContent = `Chat com ${parceiroNome} da turma ${parceiroTurma}`;
   window.salaIdAtiva = salaId;
 
   const mensagensRef = db.ref("salas/" + salaId + "/mensagens");
@@ -171,6 +147,13 @@ document.getElementById("chatTitulo").textContent = "Chat com seu parceiro (" + 
     div.textContent = msg.autor + ": " + msg.texto;
     document.getElementById("mensagens").appendChild(div);
     document.getElementById("mensagens").scrollTop = document.getElementById("mensagens").scrollHeight;
+  });
+
+  db.ref("salas/" + salaId + "/encerrado").on("value", (snap) => {
+    if (snap.val() === true) {
+      alert("Pareamento cancelado: o usuário saiu do chat.");
+      sairDoChat(true);
+    }
   });
 }
 
@@ -188,14 +171,23 @@ function enviarMensagem() {
   input.value = "";
 }
 
-
-function sairDoChat() {
+function sairDoChat(silencioso = false) {
   if (window.salaIdAtiva) {
-    db.ref("salas/" + window.salaIdAtiva + "/mensagens").off();
+    const salaPath = "salas/" + window.salaIdAtiva;
+
+    db.ref(salaPath + "/mensagens").off();
+    db.ref(salaPath + "/encerrado").off();
+
     document.getElementById("chatArea").style.display = "none";
     window.salaIdAtiva = null;
-    alert("Você saiu do chat.");
+
+    if (!silencioso) {
+      db.ref(salaPath).update({ encerrado: true });
+      alert("Você saiu do chat.");
+    }
   }
 }
+
+window.entrarNaFila = entrarNaFila;
 window.enviarMensagem = enviarMensagem;
 window.sairDoChat = sairDoChat;
