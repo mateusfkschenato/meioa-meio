@@ -130,24 +130,26 @@ mostrarChat(salaId, candidato.nomeOriginal || candidato.nome);
 
           let foiPareado = false;
 
-          const listener = salasRef.on("child_added", snapshot => {
-            if (foiPareado) return;
+          const listener = salasRef.on("child_added", (snapshot) => {
+  if (foiPareado) return;
 
-            const sala = snapshot.val();
-            const u1 = sala.usuario1;
-            const u2 = sala.usuario2;
+  const sala = snapshot.val();
+  const salaId = snapshot.key; // 🟢 pega a chave da sala
+  const u1 = sala.usuario1;
+  const u2 = sala.usuario2;
 
-            if (u1?.id === idTemporario || u2?.id === idTemporario) {
-              foiPareado = true;
-              salasRef.off("child_added", listener);
-              filaRef.child(meuId).remove();
+  if (u1?.id === idTemporario || u2?.id === idTemporario) {
+    foiPareado = true;
+    salasRef.off("child_added", listener);
+    filaRef.child(meuId).remove();
 
-              const parceiro = u1.id === idTemporario ? u2 : u1;
-             const salaId = snapshot.key;
-mostrarChat(salaId, parceiro.nomeOriginal || parceiro.nome);
+    const parceiro = u1.id === idTemporario ? u2 : u1;
 
-            }
-          });
+    // 🟢 ativa o chat para quem entrou na sala depois
+    mostrarChat(salaId, parceiro.nomeOriginal || parceiro.nome);
+  }
+});
+
         });
       }
     });
