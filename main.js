@@ -141,7 +141,7 @@ mostrarChat(salaId, parceiro.nomeOriginal, parceiro.turmaOriginal);
 function mostrarChat(salaId, parceiroNome, parceiroTurma) {
   document.getElementById("chatArea").style.display = "block";
   document.getElementById("mensagens").innerHTML = "";
-  document.getElementById("chatTitulo").textContent = `Chat com ${parceiroNome} da turma ${parceiroTurma}`;
+  document.getElementById("chatTitulo").textContent = `Chat com ${parceiroNome}, da turma ${parceiroTurma}`;
   window.salaIdAtiva = salaId;
 
   const mensagensRef = db.ref("salas/" + salaId + "/mensagens");
