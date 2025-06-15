@@ -127,7 +127,9 @@ function entrarNaFila() {
               filaRef.child(meuId).remove();
 
               const parceiro = u1.id === idTemporario ? u2 : u1;
-              mostrarChat(salaId, parceiro.nomeOriginal || parceiro.nome, parceiro.turmaOriginal || parceiro.turma);
+              alert("Você foi pareado com " + parceiro.nomeOriginal + " da turma " + parceiro.turmaOriginal + "!");
+mostrarChat(salaId, parceiro.nomeOriginal, parceiro.turmaOriginal);
+
             }
           });
         });
