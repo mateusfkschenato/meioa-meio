@@ -143,8 +143,10 @@ function mostrarChat(salaId, parceiroNome, parceiroTurma) {
 
   mensagensRef.on("child_added", (snapshot) => {
     const msg = snapshot.val();
+    const hora = formatarHorarioBrasilia(msg.timestamp);
+
     const div = document.createElement("div");
-    div.textContent = msg.autor + ": " + msg.texto;
+    div.textContent = `${msg.autor} (${hora}): ${msg.texto}`;
     document.getElementById("mensagens").appendChild(div);
     document.getElementById("mensagens").scrollTop = document.getElementById("mensagens").scrollHeight;
   });
@@ -155,6 +157,19 @@ function mostrarChat(salaId, parceiroNome, parceiroTurma) {
       sairDoChat(true);
     }
   });
+}
+
+function formatarHorarioBrasilia(timestamp) {
+  const date = new Date(timestamp);
+  // Ajustar para UTC−3 (Brasília) manualmente
+  const horaUTC = date.getUTCHours();
+  const horaBrasilia = (horaUTC - 3 + 24) % 24; // Corrige para hora negativa
+  const minuto = date.getUTCMinutes();
+
+  const h = horaBrasilia.toString().padStart(2, '0');
+  const m = minuto.toString().padStart(2, '0');
+
+  return `${h}:${m}`;
 }
 
 function enviarMensagem() {
