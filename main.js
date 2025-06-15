@@ -101,12 +101,11 @@ window.nomeOriginalGlobal = nomeOriginal;
           timestamp: Date.now()
         };
 
-        db.ref("salas").push(novaSala);
-        filaRef.child(candidato.idFirebase).remove();
-
         const salaRef = db.ref("salas").push(novaSala);
 const salaId = salaRef.key;
+filaRef.child(candidato.idFirebase).remove();
 mostrarChat(salaId, candidato.nomeOriginal || candidato.nome);
+
 
 
         // Remove a si mesmo da fila caso ainda esteja
