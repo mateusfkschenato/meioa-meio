@@ -154,12 +154,20 @@ function mostrarChat(salaId, parceiroNome, parceiroTurma) {
     document.getElementById("mensagens").scrollTop = document.getElementById("mensagens").scrollHeight;
   });
 
-  db.ref("salas/" + salaId + "/encerrado").on("value", (snap) => {
-    if (snap.val() === true) {
-      alert("Pareamento cancelado: o usuário saiu do chat.");
-      sairDoChat(true);
-    }
-  });
+  const encerradoRef = db.ref("salas/" + salaId + "/encerrado");
+
+encerradoRef.once("value").then((snap) => {
+  if (snap.val() !== true) {
+    // só escuta se ainda não foi encerrado
+    encerradoRef.on("value", (snap2) => {
+      if (snap2.val() === true) {
+        alert("Pareamento cancelado: o usuário saiu do chat.");
+        sairDoChat(true);
+      }
+    });
+  }
+});
+
 }
 
 function formatarHorarioBrasilia(timestamp) {
