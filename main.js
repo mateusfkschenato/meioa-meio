@@ -46,15 +46,18 @@ function entrarNaFila() {
     let jaEstaEmSala = false;
 
     if (salas) {
-      Object.values(salas).forEach(sala => {
-        const u1 = sala.usuario1;
-        const u2 = sala.usuario2;
+  Object.values(salas).forEach(sala => {
+    if (sala.encerrado === true) return; // 🟢 ignora salas encerradas
 
-        if (u1?.id === idTemporario || u2?.id === idTemporario) {
-          jaEstaEmSala = true;
-        }
-      });
+    const u1 = sala.usuario1;
+    const u2 = sala.usuario2;
+
+    if (u1?.id === idTemporario || u2?.id === idTemporario) {
+      jaEstaEmSala = true;
     }
+  });
+}
+
 
     if (jaEstaEmSala) {
       alert("Você já está pareado com alguém!");
