@@ -102,9 +102,13 @@ function entrarNaFila() {
         };
 
         const salaRef = db.ref("salas").push(novaSala);
-        const salaId = salaRef.key;
-        filaRef.child(candidato.idFirebase).remove();
-        mostrarChat(salaId, candidato.nomeOriginal || candidato.nome, candidato.turmaOriginal || candidato.turma);
+const salaId = salaRef.key;
+filaRef.child(candidato.idFirebase).remove();
+
+alert("Você foi pareado com " + candidato.nomeOriginal + " da turma " + candidato.turmaOriginal + "!");
+
+mostrarChat(salaId, candidato.nomeOriginal, candidato.turmaOriginal);
+
 
       } else {
         const meuId = filaRef.push().key;
