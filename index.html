@@ -19,7 +19,8 @@
 
   <div id="mensagens" style="border: 1px solid #ccc; padding: 10px; height: 200px; overflow-y: auto; background-color: #f9f9f9;"></div>
  <input id="msgInput" placeholder="Digite sua mensagem" style="width: 70%;"
-       onkeydown="if(event.key === 'Enter') enviarMensagem();">
+       onkeyup="if(event.key === 'Enter') enviarMensagem();">
+
 <button onclick="enviarMensagem()">Enviar</button>
 
   <button onclick="sairDoChat()">Sair do chat</button>
