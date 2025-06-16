@@ -204,22 +204,25 @@ function enviarMensagem() {
 }
 
 function sairDoChat(silencioso = false) {
-  if (window.salaIdAtiva) {
-    const salaPath = "salas/" + window.salaIdAtiva;
+  if (!window.salaIdAtiva) return;
 
-    db.ref(salaPath + "/mensagens").off();
-    db.ref(salaPath + "/encerrado").off();
+  const salaPath = "salas/" + window.salaIdAtiva;
 
-    document.getElementById("chatArea").style.display = "none";
-    window.salaIdAtiva = null;
+  if (!silencioso) {
+    const confirmar = confirm("Tem certeza que deseja sair do chat?");
+    if (!confirmar) return;
 
-    if (!silencioso) {
-  const confirmar = confirm("Tem certeza que deseja sair do chat?");
-  if (!confirmar) return;
+    db.ref(salaPath).update({ encerrado: true });
+    alert("Você saiu do chat.");
+  }
 
-  db.ref(salaPath).update({ encerrado: true });
-  alert("Você saiu do chat.");
+  db.ref(salaPath + "/mensagens").off();
+  db.ref(salaPath + "/encerrado").off();
+
+  document.getElementById("chatArea").style.display = "none";
+  window.salaIdAtiva = null;
 }
+
 
   }
 }
