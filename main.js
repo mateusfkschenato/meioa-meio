@@ -214,9 +214,13 @@ function sairDoChat(silencioso = false) {
     window.salaIdAtiva = null;
 
     if (!silencioso) {
-      db.ref(salaPath).update({ encerrado: true });
-      alert("Você saiu do chat.");
-    }
+  const confirmar = confirm("Tem certeza que deseja sair do chat?");
+  if (!confirmar) return;
+
+  db.ref(salaPath).update({ encerrado: true });
+  alert("Você saiu do chat.");
+}
+
   }
 }
 
