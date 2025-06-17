@@ -224,8 +224,8 @@ function sairDoChat(silencioso = false) {
 }
 
 
-  }
-}
+  
+
 
 window.entrarNaFila = entrarNaFila;
 window.enviarMensagem = enviarMensagem;
