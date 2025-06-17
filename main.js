@@ -129,6 +129,8 @@ mostrarChat(salaId, candidato.nomeOriginal, candidato.turmaOriginal);
               foiPareado = true;
               salasRef.off("child_added", listener);
               filaRef.child(meuId).remove();
+                
+
 
               const parceiro = u1.id === idTemporario ? u2 : u1;
               alert("Você foi pareado com " + parceiro.nomeOriginal + " da turma " + parceiro.turmaOriginal + "!");
@@ -164,15 +166,28 @@ function mostrarChat(salaId, parceiroNome, parceiroTurma) {
 
 encerradoRef.once("value").then((snap) => {
   if (snap.val() !== true) {
-    // só escuta se ainda não foi encerrado
     encerradoRef.on("value", (snap2) => {
       if (snap2.val() === true) {
-        alert("Pareamento cancelado: o usuário saiu do chat.");
-        sairDoChat(true);
+        db.ref("salas/" + salaId + "/encerradoPor").once("value").then((motivoSnap) => {
+          const motivo = motivoSnap.val();
+          const mensagem = motivo === "desconectado"
+            ? "Pareamento cancelado: foi perdida a conexão com o seu parceiro."
+            : "Pareamento cancelado: o usuário saiu do chat.";
+          alert(mensagem);
+          sairDoChat(true);
+        });
       }
     });
   }
 });
+
+// 🟢 Marca que está conectado e define comportamento ao desconectar
+const statusRef = db.ref("salas/" + salaId + "/status/" + idTemporario);
+statusRef.set({ conectado: true });
+
+statusRef.onDisconnect().remove();
+db.ref("salas/" + salaId + "/encerrado").onDisconnect().set(true);
+db.ref("salas/" + salaId + "/encerradoPor").onDisconnect().set("desconectado");
 
 }
 
