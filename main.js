@@ -41,31 +41,37 @@ function entrarNaFila() {
   const filaRef = db.ref("fila");
   const salasRef = db.ref("salas");
 
-  salasRef.once("value").then((salasSnapshot) => {
-    const salas = salasSnapshot.val();
-    let jaEstaEmSala = false;
+  // Verifica se já está na fila
+  filaRef.once("value").then((snapshot) => {
+    const fila = snapshot.val();
+    const jaNaFila = fila && Object.values(fila).some(u => u.id === idTemporario);
 
-    if (salas) {
-  Object.values(salas).forEach(sala => {
-    if (sala.encerrado === true) return; // 🟢 ignora salas encerradas
-
-    const u1 = sala.usuario1;
-    const u2 = sala.usuario2;
-
-    if (u1?.id === idTemporario || u2?.id === idTemporario) {
-      jaEstaEmSala = true;
-    }
-  });
-}
-
-
-    if (jaEstaEmSala) {
-      alert("Você já está pareado com alguém!");
+    if (jaNaFila) {
+      alert("Você já está na fila. Aguarde o pareamento.");
       return;
     }
 
-    filaRef.once("value").then(snapshot => {
-      const fila = snapshot.val();
+    salasRef.once("value").then((salasSnapshot) => {
+      const salas = salasSnapshot.val();
+      let jaEstaEmSala = false;
+
+      if (salas) {
+        Object.values(salas).forEach(sala => {
+          if (sala.encerrado === true) return;
+
+          const u1 = sala.usuario1;
+          const u2 = sala.usuario2;
+
+          if (u1?.id === idTemporario || u2?.id === idTemporario) {
+            jaEstaEmSala = true;
+          }
+        });
+      }
+
+      if (jaEstaEmSala) {
+        alert("Você já está pareado com alguém!");
+        return;
+      }
 
       const filaArray = fila
         ? Object.entries(fila)
@@ -102,13 +108,11 @@ function entrarNaFila() {
         };
 
         const salaRef = db.ref("salas").push(novaSala);
-const salaId = salaRef.key;
-filaRef.child(candidato.idFirebase).remove();
+        const salaId = salaRef.key;
+        filaRef.child(candidato.idFirebase).remove();
 
-alert("Você foi pareado com " + candidato.nomeOriginal + " da turma " + candidato.turmaOriginal + "!");
-
-mostrarChat(salaId, candidato.nomeOriginal, candidato.turmaOriginal);
-
+        alert("Você foi pareado com " + candidato.nomeOriginal + " da turma " + candidato.turmaOriginal + "!");
+        mostrarChat(salaId, candidato.nomeOriginal, candidato.turmaOriginal);
 
       } else {
         const meuId = filaRef.push().key;
@@ -129,13 +133,10 @@ mostrarChat(salaId, candidato.nomeOriginal, candidato.turmaOriginal);
               foiPareado = true;
               salasRef.off("child_added", listener);
               filaRef.child(meuId).remove();
-                
-
 
               const parceiro = u1.id === idTemporario ? u2 : u1;
               alert("Você foi pareado com " + parceiro.nomeOriginal + " da turma " + parceiro.turmaOriginal + "!");
-mostrarChat(salaId, parceiro.nomeOriginal, parceiro.turmaOriginal);
-
+              mostrarChat(salaId, parceiro.nomeOriginal, parceiro.turmaOriginal);
             }
           });
         });
@@ -164,38 +165,34 @@ function mostrarChat(salaId, parceiroNome, parceiroTurma) {
 
   const encerradoRef = db.ref("salas/" + salaId + "/encerrado");
 
-encerradoRef.once("value").then((snap) => {
-  if (snap.val() !== true) {
-    encerradoRef.on("value", (snap2) => {
-      if (snap2.val() === true) {
-        db.ref("salas/" + salaId + "/encerradoPor").once("value").then((motivoSnap) => {
-          const motivo = motivoSnap.val();
-          const mensagem = motivo === "desconectado"
-            ? "Pareamento cancelado: foi perdida a conexão com o seu parceiro."
-            : "Pareamento cancelado: o usuário saiu do chat.";
-          alert(mensagem);
-          sairDoChat(true);
-        });
-      }
-    });
-  }
-});
+  encerradoRef.once("value").then((snap) => {
+    if (snap.val() !== true) {
+      encerradoRef.on("value", (snap2) => {
+        if (snap2.val() === true) {
+          db.ref("salas/" + salaId + "/encerradoPor").once("value").then((motivoSnap) => {
+            const motivo = motivoSnap.val();
+            const mensagem = motivo === "desconectado"
+              ? "Pareamento cancelado: foi perdida a conexão com o seu parceiro."
+              : "Pareamento cancelado: o usuário saiu do chat.";
+            alert(mensagem);
+            sairDoChat(true);
+          });
+        }
+      });
+    }
+  });
 
-// 🟢 Marca que está conectado e define comportamento ao desconectar
-const statusRef = db.ref("salas/" + salaId + "/status/" + idTemporario);
-statusRef.set({ conectado: true });
-
-statusRef.onDisconnect().remove();
-db.ref("salas/" + salaId + "/encerrado").onDisconnect().set(true);
-db.ref("salas/" + salaId + "/encerradoPor").onDisconnect().set("desconectado");
-
+  const statusRef = db.ref("salas/" + salaId + "/status/" + idTemporario);
+  statusRef.set({ conectado: true });
+  statusRef.onDisconnect().remove();
+  db.ref("salas/" + salaId + "/encerrado").onDisconnect().set(true);
+  db.ref("salas/" + salaId + "/encerradoPor").onDisconnect().set("desconectado");
 }
 
 function formatarHorarioBrasilia(timestamp) {
   const date = new Date(timestamp);
-  // Ajustar para UTC−3 (Brasília) manualmente
   const horaUTC = date.getUTCHours();
-  const horaBrasilia = (horaUTC - 3 + 24) % 24; // Corrige para hora negativa
+  const horaBrasilia = (horaUTC - 3 + 24) % 24;
   const minuto = date.getUTCMinutes();
 
   const h = horaBrasilia.toString().padStart(2, '0');
@@ -237,10 +234,6 @@ function sairDoChat(silencioso = false) {
   document.getElementById("chatArea").style.display = "none";
   window.salaIdAtiva = null;
 }
-
-
-  
-
 
 window.entrarNaFila = entrarNaFila;
 window.enviarMensagem = enviarMensagem;
