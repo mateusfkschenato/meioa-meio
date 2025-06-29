@@ -39,8 +39,8 @@ function entrarNaFila() {
   window.nomeOriginalGlobal = nomeOriginal;
 
   const filaRef = db.ref("fila");
-  const filaStatusRef = db.ref("filaStatus/" + idTemporario);
   const salasRef = db.ref("salas");
+  const filaStatusRef = db.ref("filaStatus/" + idTemporario);
 
   // Verifica se já está na fila
   filaRef.once("value").then((snapshot) => {
@@ -113,10 +113,11 @@ function entrarNaFila() {
 
         alert("Você foi pareado com " + candidato.nomeOriginal + " da turma " + candidato.turmaOriginal + "!");
         mostrarChat(salaId, candidato.nomeOriginal, candidato.turmaOriginal);
+
       } else {
         const meuId = filaRef.push().key;
         filaRef.child(meuId).set(usuario).then(() => {
-          // ✅ Marca presença e define desconexão automática
+          // ✅ Presença e remoção automática na fila
           filaStatusRef.set({ conectado: true });
           filaStatusRef.onDisconnect().remove();
           filaRef.child(meuId).onDisconnect().remove();
@@ -124,8 +125,10 @@ function entrarNaFila() {
           alert("Você entrou na fila! Aguardando pareamento...");
 
           let foiPareado = false;
+
           const listener = salasRef.on("child_added", (snapshot) => {
             if (foiPareado) return;
+
             const sala = snapshot.val();
             const salaId = snapshot.key;
             const u1 = sala.usuario1;
@@ -135,7 +138,7 @@ function entrarNaFila() {
               foiPareado = true;
               salasRef.off("child_added", listener);
               filaRef.child(meuId).remove();
-              filaStatusRef.remove();
+              filaStatusRef.remove(); // limpa vestígio
 
               const parceiro = u1.id === idTemporario ? u2 : u1;
               alert("Você foi pareado com " + parceiro.nomeOriginal + " da turma " + parceiro.turmaOriginal + "!");
@@ -148,8 +151,95 @@ function entrarNaFila() {
   });
 }
 
-// As demais funções permanecem como já estavam (mostrarChat, enviarMensagem, sairDoChat)
-// Elas já estão funcionando muito bem com desconexões e pareamento.
+function mostrarChat(salaId, parceiroNome, parceiroTurma) {
+  document.getElementById("chatArea").style.display = "block";
+  document.getElementById("mensagens").innerHTML = "";
+  document.getElementById("chatTitulo").textContent = `Converse com ${parceiroNome}, da turma ${parceiroTurma}`;
+  window.salaIdAtiva = salaId;
+
+  const mensagensRef = db.ref("salas/" + salaId + "/mensagens");
+
+  mensagensRef.on("child_added", (snapshot) => {
+    const msg = snapshot.val();
+    const hora = formatarHorarioBrasilia(msg.timestamp);
+
+    const div = document.createElement("div");
+    div.textContent = `${msg.autor} (${hora}): ${msg.texto}`;
+    document.getElementById("mensagens").appendChild(div);
+    document.getElementById("mensagens").scrollTop = document.getElementById("mensagens").scrollHeight;
+  });
+
+  const encerradoRef = db.ref("salas/" + salaId + "/encerrado");
+
+  encerradoRef.once("value").then((snap) => {
+    if (snap.val() !== true) {
+      encerradoRef.on("value", (snap2) => {
+        if (snap2.val() === true) {
+          db.ref("salas/" + salaId + "/encerradoPor").once("value").then((motivoSnap) => {
+            const motivo = motivoSnap.val();
+            const mensagem = motivo === "desconectado"
+              ? "Pareamento cancelado: foi perdida a conexão com o seu parceiro."
+              : "Pareamento cancelado: o usuário saiu do chat.";
+            alert(mensagem);
+            sairDoChat(true);
+          });
+        }
+      });
+    }
+  });
+
+  const statusRef = db.ref("salas/" + salaId + "/status/" + idTemporario);
+  statusRef.set({ conectado: true });
+  statusRef.onDisconnect().remove();
+  db.ref("salas/" + salaId + "/encerrado").onDisconnect().set(true);
+  db.ref("salas/" + salaId + "/encerradoPor").onDisconnect().set("desconectado");
+}
+
+function formatarHorarioBrasilia(timestamp) {
+  const date = new Date(timestamp);
+  const horaUTC = date.getUTCHours();
+  const horaBrasilia = (horaUTC - 3 + 24) % 24;
+  const minuto = date.getUTCMinutes();
+
+  const h = horaBrasilia.toString().padStart(2, '0');
+  const m = minuto.toString().padStart(2, '0');
+
+  return `${h}:${m}`;
+}
+
+function enviarMensagem() {
+  const input = document.getElementById("msgInput");
+  const texto = input.value.trim();
+  if (!texto) return;
+
+  db.ref("salas/" + window.salaIdAtiva + "/mensagens").push({
+    texto,
+    autor: window.nomeOriginalGlobal,
+    timestamp: Date.now()
+  });
+
+  input.value = "";
+}
+
+function sairDoChat(silencioso = false) {
+  if (!window.salaIdAtiva) return;
+
+  const salaPath = "salas/" + window.salaIdAtiva;
+
+  if (!silencioso) {
+    const confirmar = confirm("Tem certeza que deseja sair do chat?");
+    if (!confirmar) return;
+
+    db.ref(salaPath).update({ encerrado: true });
+    alert("Você saiu do chat.");
+  }
+
+  db.ref(salaPath + "/mensagens").off();
+  db.ref(salaPath + "/encerrado").off();
+
+  document.getElementById("chatArea").style.display = "none";
+  window.salaIdAtiva = null;
+}
 
 window.entrarNaFila = entrarNaFila;
 window.enviarMensagem = enviarMensagem;
