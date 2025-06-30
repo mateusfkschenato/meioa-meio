@@ -234,12 +234,22 @@ function sairDoChat(silencioso = false) {
     alert("Você saiu do chat.");
   }
 
+  // Desativa listeners
   db.ref(salaPath + "/mensagens").off();
   db.ref(salaPath + "/encerrado").off();
 
+  // Esconde a área do chat
   document.getElementById("chatArea").style.display = "none";
   window.salaIdAtiva = null;
+
+  // ✅ Limpa campos de entrada
+  document.getElementById("nome").value = "";
+  document.getElementById("turma").value = "";
+
+  // ✅ Limpa variáveis globais
+  window.nomeOriginalGlobal = null;
 }
+
 
 window.entrarNaFila = entrarNaFila;
 window.enviarMensagem = enviarMensagem;
