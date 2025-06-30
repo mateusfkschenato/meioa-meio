@@ -263,3 +263,7 @@ document.getElementById("turma").addEventListener("keyup", (e) => {
     if (nome && turma) entrarNaFila();
   }
 });
+// Garante que o clique no botão funcione corretamente
+document.getElementById("entrarBtn").addEventListener("click", () => {
+  entrarNaFila();
+});
