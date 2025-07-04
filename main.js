@@ -1,4 +1,3 @@
-
 // Configuração do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAzRbmT3ImY25mKsNLOAh7xBWku7ph7gzM",
@@ -168,7 +167,8 @@ function entrarNaFila() {
 }
 
 function mostrarChat(salaId, parceiroNome, parceiroTurma) {
-  document.getElementById("chatArea").style.display = "block";
+   document.getElementById("aguardandoStatus").style.display = "none"; // <- esta linha aqui!
+    document.getElementById("chatArea").style.display = "block";
   document.getElementById("mensagens").innerHTML = "";
   document.getElementById("chatTitulo").textContent = `Converse com ${parceiroNome}, da turma ${parceiroTurma}`;
   window.salaIdAtiva = salaId;
