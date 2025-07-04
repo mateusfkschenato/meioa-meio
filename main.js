@@ -1,3 +1,4 @@
+
 // Configuração do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAzRbmT3ImY25mKsNLOAh7xBWku7ph7gzM",
@@ -109,16 +110,7 @@ function entrarNaFila() {
         const salaId = salaRef.key;
         filaRef.child(candidato.idFirebase).remove();
 
-        
-  const statusEl = document.getElementById("pareadoStatus");
-  statusEl.textContent = `🎉 Você foi pareado com ${parceiroNome} da turma ${parceiroTurma}!`;
-  statusEl.style.display = "block";
-
-  setTimeout(() => {
-    statusEl.style.display = "none";
-    mostrarChat(salaId, parceiroNome, parceiroTurma);
-  }, 2000);
-
+        alert("Você foi pareado com " + candidato.nomeOriginal + " da turma " + candidato.turmaOriginal + "!");
         mostrarChat(salaId, candidato.nomeOriginal, candidato.turmaOriginal);
 
       } else {
@@ -147,16 +139,7 @@ function entrarNaFila() {
               filaStatusRef.remove();
 
               const parceiro = u1.id === idTemporario ? u2 : u1;
-              
-  const statusEl = document.getElementById("pareadoStatus");
-  statusEl.textContent = `🎉 Você foi pareado com ${parceiroNome} da turma ${parceiroTurma}!`;
-  statusEl.style.display = "block";
-
-  setTimeout(() => {
-    statusEl.style.display = "none";
-    mostrarChat(salaId, parceiroNome, parceiroTurma);
-  }, 2000);
-
+              alert("Você foi pareado com " + parceiro.nomeOriginal + " da turma " + parceiro.turmaOriginal + "!");
               mostrarChat(salaId, parceiro.nomeOriginal, parceiro.turmaOriginal);
             }
           });
@@ -167,8 +150,7 @@ function entrarNaFila() {
 }
 
 function mostrarChat(salaId, parceiroNome, parceiroTurma) {
-   document.getElementById("aguardandoStatus").style.display = "none"; // <- esta linha aqui!
-    document.getElementById("chatArea").style.display = "block";
+  document.getElementById("chatArea").style.display = "block";
   document.getElementById("mensagens").innerHTML = "";
   document.getElementById("chatTitulo").textContent = `Converse com ${parceiroNome}, da turma ${parceiroTurma}`;
   window.salaIdAtiva = salaId;
