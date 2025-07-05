@@ -110,7 +110,7 @@ function entrarNaFila() {
         const salaId = salaRef.key;
         filaRef.child(candidato.idFirebase).remove();
 
-        alert("Você foi pareado com " + candidato.nomeOriginal + " da turma " + candidato.turmaOriginal + "!");
+        alert("Você foi pareado com " + candidato.nomeOriginal + " ,da turma " + candidato.turmaOriginal + "!");
         mostrarChat(salaId, candidato.nomeOriginal, candidato.turmaOriginal);
 
       } else {
@@ -120,7 +120,7 @@ function entrarNaFila() {
           filaStatusRef.onDisconnect().remove();
           filaRef.child(meuId).onDisconnect().remove();
 
-          alert("Você entrou na fila! Aguardando pareamento...");
+          alert("Você entrou na fila! Aguardando alguém para dividir com você...");
 
           let foiPareado = false;
 
@@ -139,7 +139,7 @@ function entrarNaFila() {
               filaStatusRef.remove();
 
               const parceiro = u1.id === idTemporario ? u2 : u1;
-              alert("Você foi pareado com " + parceiro.nomeOriginal + " da turma " + parceiro.turmaOriginal + "!");
+              alert("Você foi pareado com " + parceiro.nomeOriginal + ", da turma " + parceiro.turmaOriginal + "!");
               mostrarChat(salaId, parceiro.nomeOriginal, parceiro.turmaOriginal);
             }
           });
@@ -177,7 +177,7 @@ function mostrarChat(salaId, parceiroNome, parceiroTurma) {
             const motivo = motivoSnap.val();
             const mensagem = motivo === "desconectado"
               ? "Pareamento cancelado: foi perdida a conexão com o seu parceiro."
-              : "Pareamento cancelado: o usuário saiu do chat.";
+              : "Pareamento cancelado: o parceiro saiu do chat.";
             alert(mensagem);
             sairDoChat(true);
           });
@@ -225,7 +225,7 @@ function sairDoChat(silencioso = false) {
   const salaPath = "salas/" + window.salaIdAtiva;
 
   if (!silencioso) {
-    const confirmar = confirm("Tem certeza que deseja sair do chat?");
+    const confirmar = confirm("Tem certeza de que deseja encerrar?");
     if (!confirmar) return;
 
     db.ref(salaPath).update({ encerrado: true });
