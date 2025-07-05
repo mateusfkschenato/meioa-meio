@@ -110,7 +110,7 @@ function entrarNaFila() {
         const salaId = salaRef.key;
         filaRef.child(candidato.idFirebase).remove();
 
-        alert("Você foi pareado com " + candidato.nomeOriginal + " ,da turma " + candidato.turmaOriginal + "!");
+        alert("Você foi pareado com " + candidato.nomeOriginal + ", da turma " + candidato.turmaOriginal + "!");
         mostrarChat(salaId, candidato.nomeOriginal, candidato.turmaOriginal);
 
       } else {
@@ -151,7 +151,11 @@ function entrarNaFila() {
 
 function mostrarChat(salaId, parceiroNome, parceiroTurma) {
   document.getElementById("chatArea").style.display = "block";
-  document.getElementById("mensagens").innerHTML = "";
+  const mensagensDiv = document.getElementById("mensagens");
+const placeholder = mensagensDiv.querySelector(".mensagens-placeholder");
+mensagensDiv.innerHTML = "";
+if (placeholder) mensagensDiv.appendChild(placeholder);
+
   document.getElementById("chatTitulo").textContent = `Converse com ${parceiroNome}, da turma ${parceiroTurma}`;
   window.salaIdAtiva = salaId;
 
