@@ -21,7 +21,12 @@
       <div id="chatArea" style="display: none; margin-top: 20px;">
   <h2 id="chatTitulo">Converse com seu parceiro</h2>
 
-  <div id="mensagens" style="border: 1px solid #ccc; padding: 10px; height: 200px; overflow-y: auto; background-color: #f9f9f9;"></div>
+  <div id="mensagens" class="mensagens">
+  <div class="mensagens-placeholder">
+    Aqui, vocês podem conversar sobre que horas irão dividir, onde será o ponto de encontro, como irão pagar...
+  </div>
+</div>
+
  <input id="msgInput" placeholder="Digite sua mensagem" style="width: 70%;"
        onkeyup="if(event.key === 'Enter') enviarMensagem();">
 

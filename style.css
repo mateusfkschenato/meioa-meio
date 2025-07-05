@@ -65,3 +65,24 @@ button:hover {
   font-size: 0.95rem;
   color: #243b53;
 }
+.mensagens {
+  position: relative;
+  height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background-color: #fff;
+}
+
+.mensagens-placeholder {
+  color: #ccc;
+  font-style: italic;
+  text-align: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  width: 90%;
+}
