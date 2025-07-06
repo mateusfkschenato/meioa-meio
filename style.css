@@ -84,5 +84,5 @@ button:hover {
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  width: 90%;
+  width: 60%;
 }
