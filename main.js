@@ -1,4 +1,3 @@
-
 // Configuração do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAzRbmT3ImY25mKsNLOAh7xBWku7ph7gzM",
@@ -271,3 +270,5 @@ document.getElementById("turma").addEventListener("keyup", (e) => {
 document.getElementById("entrarBtn").addEventListener("click", () => {
   entrarNaFila();
 });
+
+document.getElementById("entrarBtn").addEventListener("click", entrarNaFila);
