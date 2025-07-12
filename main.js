@@ -1,5 +1,5 @@
 const firebaseConfig = {
-  apiKey: "AIzaSyAzRbmT3ImY25mKsNLOAh7xBWku7ph7gzM",
+  apiKey: "AIzaSyAEoaH0UmiNrE4gIX6ca_6kjSB968I6OwQ",
   authDomain: "meioa-meio.firebaseapp.com",
   databaseURL: "https://meioa-meio-default-rtdb.firebaseio.com",
   projectId: "meioa-meio",
