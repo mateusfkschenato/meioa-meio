@@ -249,23 +249,8 @@ window.entrarNaFila = entrarNaFila;
 window.enviarMensagem = enviarMensagem;
 window.sairDoChat = sairDoChat;
 
-// ENTER ativa "entrar na fila"
-document.getElementById("nome").addEventListener("keyup", (e) => {
-  if (e.key === "Enter") {
-    const nome = document.getElementById("nome").value.trim();
-    const turma = document.getElementById("turma").value.trim();
-    if (nome && turma) entrarNaFila();
-  }
-});
-
-document.getElementById("turma").addEventListener("keyup", (e) => {
-  if (e.key === "Enter") {
-    const nome = document.getElementById("nome").value.trim();
-    const turma = document.getElementById("turma").value.trim();
-    if (nome && turma) entrarNaFila();
-  }
-});
-
+window.addEventListener("DOMContentLoaded", () => {
+  // ... colocar os três blocos aqui dentro
 // ENTER ativa "entrar na fila"
 document.getElementById("nome").addEventListener("keyup", (e) => {
   if (e.key === "Enter") {
@@ -285,3 +270,6 @@ document.getElementById("turma").addEventListener("keyup", (e) => {
 
 // Clique no botão
 document.getElementById("entrarBtn").addEventListener("click", entrarNaFila);
+
+    });
+
