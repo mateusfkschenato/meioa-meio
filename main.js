@@ -265,9 +265,23 @@ document.getElementById("turma").addEventListener("keyup", (e) => {
     if (nome && turma) entrarNaFila();
   }
 });
-// Garante que o clique no botão funcione corretamente
-document.getElementById("entrarBtn").addEventListener("click", () => {
-  entrarNaFila();
+
+// ENTER ativa "entrar na fila"
+document.getElementById("nome").addEventListener("keyup", (e) => {
+  if (e.key === "Enter") {
+    const nome = document.getElementById("nome").value.trim();
+    const turma = document.getElementById("turma").value.trim();
+    if (nome && turma) entrarNaFila();
+  }
 });
 
+document.getElementById("turma").addEventListener("keyup", (e) => {
+  if (e.key === "Enter") {
+    const nome = document.getElementById("nome").value.trim();
+    const turma = document.getElementById("turma").value.trim();
+    if (nome && turma) entrarNaFila();
+  }
+});
+
+// Clique no botão
 document.getElementById("entrarBtn").addEventListener("click", entrarNaFila);
