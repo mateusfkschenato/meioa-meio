@@ -1,14 +1,21 @@
+// Autenticação anônima obrigatória
+firebase.auth().signInAnonymously().catch((error) => {
+  console.error("Erro ao autenticar anonimamente:", error);
+});
+
+// Configuração do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAEoaH0UmiNrE4gIX6ca_6kjSB968I6OwQ",
   authDomain: "meioa-meio.firebaseapp.com",
   databaseURL: "https://meioa-meio-default-rtdb.firebaseio.com",
   projectId: "meioa-meio",
-  storageBucket: "meioa-meio.firebasestorage.app",
+  storageBucket: "meioa-meio.appspot.com",
   messagingSenderId: "38003308982",
   appId: "1:38003308982:web:86baa0f86f5e534621e917"
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const db = firebase.database();
 
 const idTemporario = Math.random().toString(36).substring(2) + Date.now();
