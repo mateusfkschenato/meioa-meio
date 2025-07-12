@@ -1,8 +1,3 @@
-// Autenticação anônima obrigatória
-firebase.auth().signInAnonymously().catch((error) => {
-  console.error("Erro ao autenticar anonimamente:", error);
-});
-
 // Configuração do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAEoaH0UmiNrE4gIX6ca_6kjSB968I6OwQ",
@@ -15,6 +10,18 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
+// Autenticação anônima obrigatória
+firebase.auth().signInAnonymously().catch((error) => {
+  console.error("Erro ao autenticar anonimamente:", error);
+});
+
+firebase.auth().onAuthStateChanged((user) => {
+  if (user) {
+    console.log("Usuário autenticado anonimamente:", user.uid);
+  }
+});
+
 
 const db = firebase.database();
 
