@@ -86,3 +86,52 @@ button:hover {
   pointer-events: none;
   width: 60%;
 }
+
+/* RESPONSIVIDADE: apenas para telas com largura até 600px */
+@media screen and (max-width: 600px) {
+  body {
+    padding: 10px;
+    font-size: 0.95rem;
+  }
+
+  #chatArea {
+    margin-top: 12px;
+  }
+
+  .mensagens {
+    height: 55vh;
+    font-size: 0.95rem;
+    padding: 0.7rem;
+  }
+
+  #msgInput {
+    width: 60%;
+    padding: 10px;
+    font-size: 1rem;
+    margin-right: 5px;
+  }
+
+  #mensagens {
+    margin-bottom: 10px;
+  }
+
+  button {
+    padding: 10px;
+    font-size: 0.95rem;
+    width: auto;
+    margin: 5px 2px;
+  }
+
+  #chatTitulo {
+    font-size: 1.2rem;
+  }
+
+  .mensagens-placeholder {
+    font-size: 0.85rem;
+    width: 90%;
+  }
+
+  input {
+    width: 100%;
+  }
+}
