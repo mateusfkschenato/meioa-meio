@@ -135,3 +135,27 @@ button:hover {
     width: 100%;
   }
 }
+
+@media screen and (max-width: 390px) {
+  #mensagens {
+    height: 60vh;
+    font-size: 0.95rem;
+  }
+
+  #msgInput {
+    width: 60%;
+    font-size: 1rem;
+    padding: 10px;
+  }
+
+  button {
+    width: 35%;
+    font-size: 0.95rem;
+    padding: 10px;
+  }
+
+  .mensagens-placeholder {
+    font-size: 0.85rem;
+    width: 90%;
+  }
+}
