@@ -122,7 +122,7 @@ function entrarNaFila() {
         const salaId = salaRef.key;
         filaRef.child(candidato.idFirebase).remove();
 
-        alert("Você foi pareado com " + candidato.nomeOriginal + ", da turma " + candidato.turmaOriginal + "!");
+        alert("Você foi pareado com " + candidato.nomeOriginal + ", da Turma " + candidato.turmaOriginal + "!");
         mostrarChat(salaId, candidato.nomeOriginal, candidato.turmaOriginal);
 
       } else {
@@ -151,7 +151,7 @@ function entrarNaFila() {
               filaStatusRef.remove();
 
               const parceiro = u1.id === idTemporario ? u2 : u1;
-              alert("Você foi pareado com " + parceiro.nomeOriginal + ", da turma " + parceiro.turmaOriginal + "!");
+              alert("Você foi pareado com " + parceiro.nomeOriginal + ", da Turma " + parceiro.turmaOriginal + "!");
               mostrarChat(salaId, parceiro.nomeOriginal, parceiro.turmaOriginal);
             }
           });
