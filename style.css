@@ -110,7 +110,7 @@ button:hover {
   }
 
   button {
-    width: 100%;
+    width: 85%;
     padding: 12px;
     font-size: 1rem;
     margin-top: 10px;
@@ -127,7 +127,7 @@ button:hover {
   }
 
   #msgInput {
-    width: 65%;
+    width: 100%;
     font-size: 1rem;
     padding: 10px;
   }
