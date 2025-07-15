@@ -42,11 +42,9 @@
         </div>
       </div>
 
-      <input
-        id="msgInput"
-        placeholder="Digite sua mensagem"
-        style="width: 70%;"
-        onkeyup="if(event.key === 'Enter') enviarMensagem();"
+     <input id="msgInput" placeholder="Digite sua mensagem"
+       onkeyup="if(event.key === 'Enter') enviarMensagem();">
+
       />
       <button onclick="enviarMensagem()">Enviar</button>
       <button onclick="sairDoChat()">Sair do chat</button>
