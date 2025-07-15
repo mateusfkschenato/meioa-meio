@@ -1,46 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
   <head>
-      <!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    
+    <meta charset="UTF-8" />
     <title>Meio a Meio</title>
 
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- VIEWPORT para celulares -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<link rel="stylesheet" href="style.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css" />
   </head>
+
   <body>
-      <img class="logo" src="https://img.icons8.com/color/96/sandwich.png" alt="Logo">
+    <!-- Logo -->
+    <img class="logo" src="https://img.icons8.com/color/96/sandwich.png" alt="Logo" />
+
+    <!-- Título -->
     <h1>Divida seu prensado! #BoraDividir</h1>
-    <input id="nome" placeholder="Seu nome">
-<input id="turma" placeholder="Sua turma" type="number" min="1">
-<button id="entrarBtn">Entrar na fila</button>
-      <div id="aguardandoStatus"></div>
-<div id="pareadoStatus" style="display: none; font-size: 1.2rem; margin-top: 1rem; transition: opacity 0.5s ease;"></div>
 
-      <div id="chatArea" style="display: none; margin-top: 20px;">
-  <h2 id="chatTitulo">Converse com seu parceiro</h2>
+    <!-- Formulário -->
+    <input id="nome" placeholder="Seu nome" />
+    <input id="turma" placeholder="Sua turma" type="number" min="1" />
+    <button id="entrarBtn">Entrar na fila</button>
 
-  <div id="mensagens" class="mensagens">
-  <div class="mensagens-placeholder">
-    Aqui, vocês podem conversar sobre que horas irão dividir, onde será o ponto de encontro, como irão pagar...
-  </div>
-</div>
+    <!-- Mensagens de status -->
+    <div id="aguardandoStatus"></div>
+    <div id="pareadoStatus" style="display: none; font-size: 1.2rem; margin-top: 1rem; transition: opacity 0.5s ease;"></div>
 
- <input id="msgInput" placeholder="Digite sua mensagem" style="width: 70%;"
-       onkeyup="if(event.key === 'Enter') enviarMensagem();">
+    <!-- Chat -->
+    <div id="chatArea" style="display: none; margin-top: 20px;">
+      <h2 id="chatTitulo">Converse com seu parceiro</h2>
 
-<button onclick="enviarMensagem()">Enviar</button>
+      <div id="mensagens" class="mensagens">
+        <div class="mensagens-placeholder">
+          Aqui, vocês podem conversar sobre que horas irão dividir, onde será o ponto de encontro, como irão pagar...
+        </div>
+      </div>
 
-  <button onclick="sairDoChat()">Sair do chat</button>
-</div>
+      <input
+        id="msgInput"
+        placeholder="Digite sua mensagem"
+        style="width: 70%;"
+        onkeyup="if(event.key === 'Enter') enviarMensagem();"
+      />
+      <button onclick="enviarMensagem()">Enviar</button>
+      <button onclick="sairDoChat()">Sair do chat</button>
+    </div>
 
-
-
+    <!-- JS -->
     <script src="main.js"></script>
-
   </body>
 </html>

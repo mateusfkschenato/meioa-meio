@@ -65,6 +65,7 @@ button:hover {
   font-size: 0.95rem;
   color: #243b53;
 }
+
 .mensagens {
   position: relative;
   height: 200px;
@@ -87,75 +88,56 @@ button:hover {
   width: 60%;
 }
 
-/* RESPONSIVIDADE: apenas para telas com largura até 600px */
-@media screen and (max-width: 600px) {
+/* RESPONSIVIDADE: iPhone 13 e telas pequenas */
+@media screen and (max-width: 420px) {
   body {
-    padding: 10px;
+    padding: 12px;
     font-size: 0.95rem;
   }
 
-  #chatArea {
-    margin-top: 12px;
+  h1 {
+    font-size: 1.8rem;
+    text-align: center;
   }
 
-  .mensagens {
-    height: 55vh;
-    font-size: 0.95rem;
-    padding: 0.7rem;
-  }
-
-  #msgInput {
-    width: 60%;
-    padding: 10px;
-    font-size: 1rem;
-    margin-right: 5px;
-  }
-
-  #mensagens {
-    margin-bottom: 10px;
-  }
-
-  button {
-    padding: 10px;
-    font-size: 0.95rem;
-    width: auto;
-    margin: 5px 2px;
-  }
-
-  #chatTitulo {
-    font-size: 1.2rem;
-  }
-
-  .mensagens-placeholder {
-    font-size: 0.85rem;
-    width: 90%;
+  .logo {
+    width: 60px;
   }
 
   input {
     width: 100%;
+    font-size: 0.95rem;
   }
-}
 
-@media screen and (max-width: 300px) {
-  #mensagens {
-    height: 60vh;
+  button {
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+    margin-top: 10px;
+  }
+
+  #chatArea {
+    margin-top: 14px;
+  }
+
+  .mensagens {
+    height: 55vh;
+    padding: 0.6rem;
     font-size: 0.95rem;
   }
 
   #msgInput {
-    width: 60%;
+    width: 65%;
     font-size: 1rem;
-    padding: 10px;
-  }
-
-  button {
-    width: 35%;
-    font-size: 0.95rem;
     padding: 10px;
   }
 
   .mensagens-placeholder {
     font-size: 0.85rem;
     width: 90%;
+  }
+
+  #chatTitulo {
+    font-size: 1.2rem;
   }
 }
