@@ -289,18 +289,31 @@ window.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("entrarBtn").addEventListener("click", entrarNaFila);
 
+     iniciarCamera(); // ← AQUI! Chamada para iniciar a câmera ao carregar
+
+
   const video = document.getElementById("camera");
   const canvas = document.getElementById("fotoCanvas");
   const preview = document.getElementById("previewFoto");
 
+  function iniciarCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert("Navegador não suporta acesso à câmera.");
+    return;
+  }
+
   navigator.mediaDevices.getUserMedia({ video: true })
     .then(stream => {
+      const video = document.getElementById("camera");
       video.srcObject = stream;
+      video.play();
     })
     .catch(error => {
       console.error("Erro ao acessar a câmera:", error);
-      alert("Erro ao acessar a câmera");
+      alert("Não foi possível acessar a câmera. Verifique as permissões do navegador.");
     });
+}
+
 
   window.tirarFoto = function () {
     const context = canvas.getContext("2d");
