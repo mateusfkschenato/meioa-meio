@@ -314,6 +314,8 @@ window.addEventListener("DOMContentLoaded", () => {
     });
 }
 
+    document.getElementById("ativarCameraBtn").addEventListener("click", iniciarCamera);
+
 
   window.tirarFoto = function () {
     const context = canvas.getContext("2d");
