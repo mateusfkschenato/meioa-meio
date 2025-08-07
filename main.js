@@ -1,3 +1,5 @@
+// Arquivo main.js atualizado com suporte à captura de foto e exibição no chat
+
 // Configuração do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAEoaH0UmiNrE4gIX6ca_6kjSB968I6OwQ",
@@ -11,7 +13,6 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-// Autenticação anônima obrigatória
 firebase.auth().signInAnonymously().catch((error) => {
   console.error("Erro ao autenticar anonimamente:", error);
 });
@@ -22,141 +23,138 @@ firebase.auth().onAuthStateChanged((user) => {
   }
 });
 
-
 const db = firebase.database();
-
 const idTemporario = Math.random().toString(36).substring(2) + Date.now();
 console.log("ID Temporário:", idTemporario);
 
 function entrarNaFila() {
   const nomeOriginal = document.getElementById("nome").value.trim();
   const turmaOriginal = document.getElementById("turma").value.trim();
-
   const nome = nomeOriginal.toLowerCase();
   const turma = turmaOriginal.toLowerCase();
 
   if (!nome || !turma) {
-    alert("Preencha seu nome e sua turma.");
+    alert("Preencha com seu nome e sua turma.");
     return;
   }
 
-  const usuario = {
-    id: idTemporario,
-    nome,
-    turma,
-    nomeOriginal,
-    turmaOriginal,
-    timestamp: Date.now()
-  };
+  const canvas = document.getElementById("fotoCanvas");
+  const dataURL = canvas.toDataURL("image/jpeg");
+  const blobPromise = fetch(dataURL).then(res => res.blob());
 
-  window.nomeOriginalGlobal = nomeOriginal;
+  const user = firebase.auth().currentUser;
+  const storageRef = firebase.storage().ref(`fotos-perfil/${user.uid}.jpg`);
 
-  const filaRef = db.ref("fila");
-  const salasRef = db.ref("salas");
-  const filaStatusRef = db.ref("filaStatus/" + idTemporario);
-
-  filaRef.once("value").then((snapshot) => {
-    const fila = snapshot.val();
-    const jaNaFila = fila && Object.values(fila).some(u => u.id === idTemporario);
-
-    if (jaNaFila) {
-      alert("Você já está na fila. Aguarde o pareamento.");
-      return;
-    }
-
-    salasRef.once("value").then((salasSnapshot) => {
-      const salas = salasSnapshot.val();
-      let jaEstaEmSala = false;
-
-      if (salas) {
-        Object.values(salas).forEach(sala => {
-          if (sala.encerrado === true) return;
-          const u1 = sala.usuario1;
-          const u2 = sala.usuario2;
-          if (u1?.id === idTemporario || u2?.id === idTemporario) {
-            jaEstaEmSala = true;
-          }
-        });
-      }
-
-      if (jaEstaEmSala) {
-        alert("Você já está pareado com alguém!");
-        return;
-      }
-
-      const filaArray = fila
-        ? Object.entries(fila)
-            .map(([id, dados]) => ({ idFirebase: id, ...dados }))
-            .sort((a, b) => a.timestamp - b.timestamp)
-        : [];
-
-      const candidato = filaArray.find(u =>
-        u.id !== idTemporario &&
-        !(salas && Object.values(salas).some(sala =>
-          sala.usuario1?.id === u.id || sala.usuario2?.id === u.id
-        ))
-      );
-
-      if (candidato) {
-        const novaSala = {
-          usuario1: {
-            id: candidato.id,
-            nome: candidato.nome,
-            turma: candidato.turma,
-            nomeOriginal: candidato.nomeOriginal || candidato.nome,
-            turmaOriginal: candidato.turmaOriginal || candidato.turma,
-            timestamp: candidato.timestamp
-          },
-          usuario2: {
-            id: usuario.id,
-            nome: usuario.nome,
-            turma: usuario.turma,
-            nomeOriginal: usuario.nomeOriginal,
-            turmaOriginal: usuario.turmaOriginal,
-            timestamp: Date.now()
-          },
+  blobPromise.then(blob => {
+    storageRef.put(blob).then(snapshot => {
+      snapshot.ref.getDownloadURL().then(fotoUrl => {
+        const usuario = {
+          id: idTemporario,
+          nome,
+          turma,
+          nomeOriginal,
+          turmaOriginal,
+          fotoUrl,
           timestamp: Date.now()
         };
 
-        const salaRef = db.ref("salas").push(novaSala);
-        const salaId = salaRef.key;
-        filaRef.child(candidato.idFirebase).remove();
+        window.nomeOriginalGlobal = nomeOriginal;
 
-        alert("Você foi pareado com " + candidato.nomeOriginal + ", da Turma " + candidato.turmaOriginal + "!");
-        mostrarChat(salaId, candidato.nomeOriginal, candidato.turmaOriginal);
+        const filaRef = db.ref("fila");
+        const salasRef = db.ref("salas");
+        const filaStatusRef = db.ref("filaStatus/" + idTemporario);
 
-      } else {
-        const meuId = filaRef.push().key;
-        filaRef.child(meuId).set(usuario).then(() => {
-          filaStatusRef.set({ conectado: true });
-          filaStatusRef.onDisconnect().remove();
-          filaRef.child(meuId).onDisconnect().remove();
+        filaRef.once("value").then((snapshot) => {
+          const fila = snapshot.val();
+          const jaNaFila = fila && Object.values(fila).some(u => u.id === idTemporario);
 
-          alert("Você entrou na fila! Aguardando alguém para dividir com você...");
+          if (jaNaFila) {
+            alert("Você já está na fila. Aguarde o pareamento.");
+            return;
+          }
 
-          let foiPareado = false;
+          salasRef.once("value").then((salasSnapshot) => {
+            const salas = salasSnapshot.val();
+            let jaEstaEmSala = false;
 
-          const listener = salasRef.on("child_added", (snapshot) => {
-            if (foiPareado) return;
+            if (salas) {
+              Object.values(salas).forEach(sala => {
+                if (sala.encerrado === true) return;
+                const u1 = sala.usuario1;
+                const u2 = sala.usuario2;
+                if (u1?.id === idTemporario || u2?.id === idTemporario) {
+                  jaEstaEmSala = true;
+                }
+              });
+            }
 
-            const sala = snapshot.val();
-            const salaId = snapshot.key;
-            const u1 = sala.usuario1;
-            const u2 = sala.usuario2;
+            if (jaEstaEmSala) {
+              alert("Você já está pareado com alguém!");
+              return;
+            }
 
-            if (u1?.id === idTemporario || u2?.id === idTemporario) {
-              foiPareado = true;
-              salasRef.off("child_added", listener);
-              filaRef.child(meuId).remove();
-              filaStatusRef.remove();
+            const filaArray = fila
+              ? Object.entries(fila)
+                  .map(([id, dados]) => ({ idFirebase: id, ...dados }))
+                  .sort((a, b) => a.timestamp - b.timestamp)
+              : [];
 
-              const parceiro = u1.id === idTemporario ? u2 : u1;
-              alert("Você foi pareado com " + parceiro.nomeOriginal + ", da Turma " + parceiro.turmaOriginal + "!");
-              mostrarChat(salaId, parceiro.nomeOriginal, parceiro.turmaOriginal);
+            const candidato = filaArray.find(u =>
+              u.id !== idTemporario &&
+              !(salas && Object.values(salas).some(sala =>
+                sala.usuario1?.id === u.id || sala.usuario2?.id === u.id
+              ))
+            );
+
+            if (candidato) {
+              const novaSala = {
+                usuario1: candidato,
+                usuario2: usuario,
+                timestamp: Date.now()
+              };
+
+              const salaRef = db.ref("salas").push(novaSala);
+              const salaId = salaRef.key;
+              filaRef.child(candidato.idFirebase).remove();
+
+              alert("Você foi pareado com " + candidato.nomeOriginal + ", da Turma " + candidato.turmaOriginal + "!");
+              mostrarChat(salaId, candidato.nomeOriginal, candidato.turmaOriginal);
+
+            } else {
+              const meuId = filaRef.push().key;
+              filaRef.child(meuId).set(usuario).then(() => {
+                filaStatusRef.set({ conectado: true });
+                filaStatusRef.onDisconnect().remove();
+                filaRef.child(meuId).onDisconnect().remove();
+
+                alert("Você entrou na fila! Aguardando alguém para dividir com você...");
+
+                let foiPareado = false;
+
+                const listener = salasRef.on("child_added", (snapshot) => {
+                  if (foiPareado) return;
+
+                  const sala = snapshot.val();
+                  const salaId = snapshot.key;
+                  const u1 = sala.usuario1;
+                  const u2 = sala.usuario2;
+
+                  if (u1?.id === idTemporario || u2?.id === idTemporario) {
+                    foiPareado = true;
+                    salasRef.off("child_added", listener);
+                    filaRef.child(meuId).remove();
+                    filaStatusRef.remove();
+
+                    const parceiro = u1.id === idTemporario ? u2 : u1;
+                    alert("Você foi pareado com " + parceiro.nomeOriginal + ", da Turma " + parceiro.turmaOriginal + "!");
+                    mostrarChat(salaId, parceiro.nomeOriginal, parceiro.turmaOriginal);
+                  }
+                });
+              });
             }
           });
         });
-      }
+      });
     });
   });
 }
@@ -164,9 +162,9 @@ function entrarNaFila() {
 function mostrarChat(salaId, parceiroNome, parceiroTurma) {
   document.getElementById("chatArea").style.display = "block";
   const mensagensDiv = document.getElementById("mensagens");
-const placeholder = mensagensDiv.querySelector(".mensagens-placeholder");
-mensagensDiv.innerHTML = "";
-if (placeholder) mensagensDiv.appendChild(placeholder);
+  const placeholder = mensagensDiv.querySelector(".mensagens-placeholder");
+  mensagensDiv.innerHTML = "";
+  if (placeholder) mensagensDiv.appendChild(placeholder);
 
   document.getElementById("chatTitulo").textContent = `Converse com ${parceiroNome}, da turma ${parceiroTurma}`;
   window.salaIdAtiva = salaId;
@@ -179,8 +177,8 @@ if (placeholder) mensagensDiv.appendChild(placeholder);
 
     const div = document.createElement("div");
     div.textContent = `${msg.autor} (${hora}): ${msg.texto}`;
-    document.getElementById("mensagens").appendChild(div);
-    document.getElementById("mensagens").scrollTop = document.getElementById("mensagens").scrollHeight;
+    mensagensDiv.appendChild(div);
+    mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
   });
 
   const encerradoRef = db.ref("salas/" + salaId + "/encerrado");
@@ -200,6 +198,15 @@ if (placeholder) mensagensDiv.appendChild(placeholder);
         }
       });
     }
+  });
+
+  const salasRef = db.ref("salas/" + salaId);
+  salasRef.once("value").then((snapshot) => {
+    const sala = snapshot.val();
+    const parceiro = sala.usuario1.id === idTemporario ? sala.usuario2 : sala.usuario1;
+
+    document.getElementById("parceiroFoto").src = parceiro.fotoUrl || "";
+    document.getElementById("parceiroNomeTurma").textContent = `${parceiro.nomeOriginal}, da turma ${parceiro.turmaOriginal}`;
   });
 
   const statusRef = db.ref("salas/" + salaId + "/status/" + idTemporario);
@@ -264,26 +271,43 @@ window.enviarMensagem = enviarMensagem;
 window.sairDoChat = sairDoChat;
 
 window.addEventListener("DOMContentLoaded", () => {
-  // ... colocar os três blocos aqui dentro
-// ENTER ativa "entrar na fila"
-document.getElementById("nome").addEventListener("keyup", (e) => {
-  if (e.key === "Enter") {
-    const nome = document.getElementById("nome").value.trim();
-    const turma = document.getElementById("turma").value.trim();
-    if (nome && turma) entrarNaFila();
-  }
-});
+  document.getElementById("nome").addEventListener("keyup", (e) => {
+    if (e.key === "Enter") {
+      const nome = document.getElementById("nome").value.trim();
+      const turma = document.getElementById("turma").value.trim();
+      if (nome && turma) entrarNaFila();
+    }
+  });
 
-document.getElementById("turma").addEventListener("keyup", (e) => {
-  if (e.key === "Enter") {
-    const nome = document.getElementById("nome").value.trim();
-    const turma = document.getElementById("turma").value.trim();
-    if (nome && turma) entrarNaFila();
-  }
-});
+  document.getElementById("turma").addEventListener("keyup", (e) => {
+    if (e.key === "Enter") {
+      const nome = document.getElementById("nome").value.trim();
+      const turma = document.getElementById("turma").value.trim();
+      if (nome && turma) entrarNaFila();
+    }
+  });
 
-// Clique no botão
-document.getElementById("entrarBtn").addEventListener("click", entrarNaFila);
+  document.getElementById("entrarBtn").addEventListener("click", entrarNaFila);
 
+  const video = document.getElementById("camera");
+  const canvas = document.getElementById("fotoCanvas");
+  const preview = document.getElementById("previewFoto");
+
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+      video.srcObject = stream;
+    })
+    .catch(error => {
+      console.error("Erro ao acessar a câmera:", error);
+      alert("Erro ao acessar a câmera");
     });
 
+  window.tirarFoto = function () {
+    const context = canvas.getContext("2d");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    preview.src = canvas.toDataURL("image/jpeg");
+    preview.style.display = "block";
+  };
+});
