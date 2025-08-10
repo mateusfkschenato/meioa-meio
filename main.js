@@ -1,4 +1,4 @@
-// Arquivo main.js atualizado com suporte à captura de foto e exibição no chat
+// Arquivo main.js corrigido com logs e chamada correta da câmera
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -28,8 +28,12 @@ const idTemporario = Math.random().toString(36).substring(2) + Date.now();
 console.log("ID Temporário:", idTemporario);
 
 function entrarNaFila() {
+  console.log("➡ Iniciando entrarNaFila()");
+
   const nomeOriginal = document.getElementById("nome").value.trim();
   const turmaOriginal = document.getElementById("turma").value.trim();
+  console.log("Nome:", nomeOriginal, "| Turma:", turmaOriginal);
+
   const nome = nomeOriginal.toLowerCase();
   const turma = turmaOriginal.toLowerCase();
 
@@ -41,6 +45,7 @@ function entrarNaFila() {
   const canvas = document.getElementById("fotoCanvas");
   const dataURL = canvas.toDataURL("image/jpeg");
   const blobPromise = fetch(dataURL).then(res => res.blob());
+  console.log("📷 Foto capturada e pronta para upload");
 
   const user = firebase.auth().currentUser;
   const storageRef = firebase.storage().ref(`fotos-perfil/${user.uid}.jpg`);
@@ -107,6 +112,7 @@ function entrarNaFila() {
             );
 
             if (candidato) {
+              console.log("✅ Pareamento encontrado:", candidato.nomeOriginal, candidato.turmaOriginal);
               const novaSala = {
                 usuario1: candidato,
                 usuario2: usuario,
@@ -146,6 +152,7 @@ function entrarNaFila() {
                     filaStatusRef.remove();
 
                     const parceiro = u1.id === idTemporario ? u2 : u1;
+                    console.log("✅ Pareamento encontrado:", parceiro.nomeOriginal, parceiro.turmaOriginal);
                     alert("Você foi pareado com " + parceiro.nomeOriginal + ", da Turma " + parceiro.turmaOriginal + "!");
                     mostrarChat(salaId, parceiro.nomeOriginal, parceiro.turmaOriginal);
                   }
@@ -158,117 +165,6 @@ function entrarNaFila() {
     });
   });
 }
-
-function mostrarChat(salaId, parceiroNome, parceiroTurma) {
-  document.getElementById("chatArea").style.display = "block";
-  const mensagensDiv = document.getElementById("mensagens");
-  const placeholder = mensagensDiv.querySelector(".mensagens-placeholder");
-  mensagensDiv.innerHTML = "";
-  if (placeholder) mensagensDiv.appendChild(placeholder);
-
-  document.getElementById("chatTitulo").textContent = `Converse com ${parceiroNome}, da turma ${parceiroTurma}`;
-  window.salaIdAtiva = salaId;
-
-  const mensagensRef = db.ref("salas/" + salaId + "/mensagens");
-
-  mensagensRef.on("child_added", (snapshot) => {
-    const msg = snapshot.val();
-    const hora = formatarHorarioBrasilia(msg.timestamp);
-
-    const div = document.createElement("div");
-    div.textContent = `${msg.autor} (${hora}): ${msg.texto}`;
-    mensagensDiv.appendChild(div);
-    mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
-  });
-
-  const encerradoRef = db.ref("salas/" + salaId + "/encerrado");
-
-  encerradoRef.once("value").then((snap) => {
-    if (snap.val() !== true) {
-      encerradoRef.on("value", (snap2) => {
-        if (snap2.val() === true) {
-          db.ref("salas/" + salaId + "/encerradoPor").once("value").then((motivoSnap) => {
-            const motivo = motivoSnap.val();
-            const mensagem = motivo === "desconectado"
-              ? "Pareamento cancelado: foi perdida a conexão com o seu parceiro."
-              : "Pareamento cancelado: o parceiro saiu do chat.";
-            alert(mensagem);
-            sairDoChat(true);
-          });
-        }
-      });
-    }
-  });
-
-  const salasRef = db.ref("salas/" + salaId);
-  salasRef.once("value").then((snapshot) => {
-    const sala = snapshot.val();
-    const parceiro = sala.usuario1.id === idTemporario ? sala.usuario2 : sala.usuario1;
-
-    document.getElementById("parceiroFoto").src = parceiro.fotoUrl || "";
-    document.getElementById("parceiroNomeTurma").textContent = `${parceiro.nomeOriginal}, da turma ${parceiro.turmaOriginal}`;
-  });
-
-  const statusRef = db.ref("salas/" + salaId + "/status/" + idTemporario);
-  statusRef.set({ conectado: true });
-  statusRef.onDisconnect().remove();
-  db.ref("salas/" + salaId + "/encerrado").onDisconnect().set(true);
-  db.ref("salas/" + salaId + "/encerradoPor").onDisconnect().set("desconectado");
-}
-
-function formatarHorarioBrasilia(timestamp) {
-  const date = new Date(timestamp);
-  const horaUTC = date.getUTCHours();
-  const horaBrasilia = (horaUTC - 3 + 24) % 24;
-  const minuto = date.getUTCMinutes();
-
-  const h = horaBrasilia.toString().padStart(2, '0');
-  const m = minuto.toString().padStart(2, '0');
-
-  return `${h}:${m}`;
-}
-
-function enviarMensagem() {
-  const input = document.getElementById("msgInput");
-  const texto = input.value.trim();
-  if (!texto) return;
-
-  db.ref("salas/" + window.salaIdAtiva + "/mensagens").push({
-    texto,
-    autor: window.nomeOriginalGlobal,
-    timestamp: Date.now()
-  });
-
-  input.value = "";
-}
-
-function sairDoChat(silencioso = false) {
-  if (!window.salaIdAtiva) return;
-
-  const salaPath = "salas/" + window.salaIdAtiva;
-
-  if (!silencioso) {
-    const confirmar = confirm("Tem certeza de que deseja encerrar?");
-    if (!confirmar) return;
-
-    db.ref(salaPath).update({ encerrado: true });
-    alert("Você saiu do chat.");
-  }
-
-  db.ref(salaPath + "/mensagens").off();
-  db.ref(salaPath + "/encerrado").off();
-
-  document.getElementById("chatArea").style.display = "none";
-  window.salaIdAtiva = null;
-
-  document.getElementById("nome").value = "";
-  document.getElementById("turma").value = "";
-  window.nomeOriginalGlobal = null;
-}
-
-window.entrarNaFila = entrarNaFila;
-window.enviarMensagem = enviarMensagem;
-window.sairDoChat = sairDoChat;
 
 window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("nome").addEventListener("keyup", (e) => {
@@ -289,35 +185,29 @@ window.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("entrarBtn").addEventListener("click", entrarNaFila);
 
-     iniciarCamera(); // ← AQUI! Chamada para iniciar a câmera ao carregar
-
-
   const video = document.getElementById("camera");
   const canvas = document.getElementById("fotoCanvas");
   const preview = document.getElementById("previewFoto");
 
   function iniciarCamera() {
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    alert("Navegador não suporta acesso à câmera.");
-    return;
+    console.log("Tentando iniciar a câmera...");
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert("Navegador não suporta acesso à câmera.");
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+        console.log("Câmera iniciada com sucesso.");
+      })
+      .catch(error => {
+        console.error("Erro ao acessar a câmera:", error);
+        alert("Não foi possível acessar a câmera. Verifique as permissões do navegador.");
+      });
   }
 
-  navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => {
-      const video = document.getElementById("camera");
-      video.srcObject = stream;
-      video.play();
-    })
-    .catch(error => {
-      console.error("Erro ao acessar a câmera:", error);
-      alert("Não foi possível acessar a câmera. Verifique as permissões do navegador.");
-    });
-}
-
-    document.getElementById("ativarCameraBtn").addEventListener("click", iniciarCamera);
-
-
   window.tirarFoto = function () {
+    console.log("Capturando foto...");
     const context = canvas.getContext("2d");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -325,4 +215,6 @@ window.addEventListener("DOMContentLoaded", () => {
     preview.src = canvas.toDataURL("image/jpeg");
     preview.style.display = "block";
   };
+
+  iniciarCamera();
 });
