@@ -84,9 +84,103 @@ function entrarNaFila() {
 
         console.log("➡ Etapa 7: Usuário pronto para entrar na fila", usuario);
 
-        // Aqui segue o código original de inserção na fila e pareamento
-        // (sem alterações de lógica)
-        // ...
+                const filaRef = db.ref("fila");
+        const salasRef = db.ref("salas");
+        const filaStatusRef = db.ref("filaStatus/" + idTemporario);
+
+        filaRef.once("value").then((snapshot) => {
+          const fila = snapshot.val();
+          const jaNaFila = fila && Object.values(fila).some(u => u.id === idTemporario);
+
+          if (jaNaFila) {
+            alert("Você já está na fila. Aguarde o pareamento.");
+            return;
+          }
+
+          salasRef.once("value").then((salasSnapshot) => {
+            const salas = salasSnapshot.val();
+            let jaEstaEmSala = false;
+
+            if (salas) {
+              Object.values(salas).forEach(sala => {
+                if (sala.encerrado === true) return;
+                const u1 = sala.usuario1;
+                const u2 = sala.usuario2;
+                if (u1?.id === idTemporario || u2?.id === idTemporario) {
+                  jaEstaEmSala = true;
+                }
+              });
+            }
+
+            if (jaEstaEmSala) {
+              alert("Você já está pareado com alguém!");
+              return;
+            }
+
+            const filaArray = fila
+              ? Object.entries(fila)
+                  .map(([id, dados]) => ({ idFirebase: id, ...dados }))
+                  .sort((a, b) => a.timestamp - b.timestamp)
+              : [];
+
+            const candidato = filaArray.find(u =>
+              u.id !== idTemporario &&
+              !(salas && Object.values(salas).some(sala =>
+                sala.usuario1?.id === u.id || sala.usuario2?.id === u.id
+              ))
+            );
+
+            if (candidato) {
+              console.log("✅ Pareamento encontrado:", candidato.nomeOriginal, candidato.turmaOriginal);
+              const novaSala = {
+                usuario1: candidato,
+                usuario2: usuario,
+                timestamp: Date.now()
+              };
+
+              const salaRef = db.ref("salas").push(novaSala);
+              const salaId = salaRef.key;
+              filaRef.child(candidato.idFirebase).remove();
+
+              alert("Você foi pareado com " + candidato.nomeOriginal + ", da Turma " + candidato.turmaOriginal + "!");
+              mostrarChat(salaId, candidato.nomeOriginal, candidato.turmaOriginal);
+
+            } else {
+              const meuId = filaRef.push().key;
+              filaRef.child(meuId).set(usuario).then(() => {
+                filaStatusRef.set({ conectado: true });
+                filaStatusRef.onDisconnect().remove();
+                filaRef.child(meuId).onDisconnect().remove();
+
+                alert("Você entrou na fila! Aguardando alguém para dividir com você...");
+
+                let foiPareado = false;
+
+                const listener = salasRef.on("child_added", (snapshot) => {
+                  if (foiPareado) return;
+
+                  const sala = snapshot.val();
+                  const salaId = snapshot.key;
+                  const u1 = sala.usuario1;
+                  const u2 = sala.usuario2;
+
+                  if (u1?.id === idTemporario || u2?.id === idTemporario) {
+                    foiPareado = true;
+                    salasRef.off("child_added", listener);
+                    filaRef.child(meuId).remove();
+                    filaStatusRef.remove();
+
+                    const parceiro = u1.id === idTemporario ? u2 : u1;
+                    console.log("✅ Pareamento encontrado:", parceiro.nomeOriginal, parceiro.turmaOriginal);
+                    alert("Você foi pareado com " + parceiro.nomeOriginal + ", da Turma " + parceiro.turmaOriginal + "!");
+                    mostrarChat(salaId, parceiro.nomeOriginal, parceiro.turmaOriginal);
+                  }
+                });
+              });
+            }
+          });
+        });
+
 
       })
       .catch(err => {
