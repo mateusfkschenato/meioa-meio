@@ -28,13 +28,6 @@
     <input id="nome" placeholder="Seu nome" />
     <input id="turma" placeholder="Sua turma" type="number" min="1" />
 
-    <!-- Câmera e captura -->
-    <video id="camera" autoplay playsinline style="width: 100%; max-width: 300px;"></video>
-      <button id="ativarCameraBtn">Ativar câmera</button>
-    <button onclick="tirarFoto()">Tirar foto</button>
-    <canvas id="fotoCanvas" style="display: none;"></canvas>
-    <img id="previewFoto" style="display: none; max-width: 100px; margin-top: 10px;" />
-
     <button id="entrarBtn">Entrar na fila</button>
 
     <!-- Mensagens de status -->
@@ -44,7 +37,6 @@
     <!-- Chat -->
     <div id="chatArea" style="display: none; margin-top: 20px;">
       <div id="parceiroInfo" style="display: flex; align-items: center; gap: 10px;">
-        <img id="parceiroFoto" style="width: 60px; border-radius: 50%;" />
         <div id="parceiroNomeTurma"></div>
       </div>
 
