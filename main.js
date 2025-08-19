@@ -78,7 +78,7 @@ function entrarNaFila() {
           turma,
           nomeOriginal,
           turmaOriginal,
-          fotoUrl,
+          fotoUrl, "https://via.placeholder.com/150", // foto falsa só p/ teste
           timestamp: Date.now()
         };
 
