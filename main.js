@@ -1,4 +1,7 @@
-// Arquivo main.js SEM câmera/foto – focado apenas no pareamento
+// ================================
+// main.js final
+// Fila + Pareamento + Chat (SEM câmera)
+// ================================
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -28,34 +31,28 @@ const db = firebase.database();
 const idTemporario = Math.random().toString(36).substring(2) + Date.now();
 console.log("ID Temporário:", idTemporario);
 
-// Função para entrar na fila
+// ==========================
+// Função: Entrar na fila
+// ==========================
 function entrarNaFila() {
-  console.log("➡ Etapa 1: Início da função entrarNaFila()");
+  console.log("➡ Início da função entrarNaFila()");
 
   const nomeOriginal = document.getElementById("nome").value.trim();
   const turmaOriginal = document.getElementById("turma").value.trim();
-  console.log("➡ Etapa 2: Nome:", nomeOriginal, "| Turma:", turmaOriginal);
 
-  const nome = nomeOriginal.toLowerCase();
-  const turma = turmaOriginal.toLowerCase();
-
-  if (!nome || !turma) {
-    console.warn("❌ Nome ou turma vazios. Interrompendo.");
+  if (!nomeOriginal || !turmaOriginal) {
     alert("Preencha com seu nome e sua turma.");
     return;
   }
 
-  // Usuário básico (sem foto)
   const usuario = {
     id: idTemporario,
-    nome,
-    turma,
+    nome: nomeOriginal.toLowerCase(),
+    turma: turmaOriginal.toLowerCase(),
     nomeOriginal,
     turmaOriginal,
     timestamp: Date.now()
   };
-
-  console.log("➡ Usuário pronto para entrar na fila", usuario);
 
   const filaRef = db.ref("fila");
   const salasRef = db.ref("salas");
@@ -125,7 +122,7 @@ function entrarNaFila() {
           filaStatusRef.onDisconnect().remove();
           filaRef.child(meuId).onDisconnect().remove();
 
-          alert("Você entrou na fila! Aguardando alguém para dividir com você...");
+          alert("Você entrou na fila! Aguardando alguém...");
 
           let foiPareado = false;
 
@@ -155,7 +152,65 @@ function entrarNaFila() {
   });
 }
 
-// Atalhos: Enter e botão
+// ==========================
+// Funções do Chat
+// ==========================
+function mostrarChat(salaId, parceiroNome, parceiroTurma) {
+  document.getElementById("parearArea").style.display = "none";
+  document.getElementById("chatArea").style.display = "block";
+
+  document.getElementById("chatTitulo").innerText =
+    "Chat com " + parceiroNome + " (" + parceiroTurma + ")";
+
+  const mensagensRef = db.ref("salas/" + salaId + "/mensagens");
+
+  mensagensRef.on("child_added", (snapshot) => {
+    const msg = snapshot.val();
+    const mensagensDiv = document.getElementById("mensagens");
+    const novaMsg = document.createElement("p");
+    novaMsg.textContent = msg.remetente + ": " + msg.texto;
+    mensagensDiv.appendChild(novaMsg);
+    mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
+  });
+
+  document.getElementById("enviarBtn").onclick = function () {
+    enviarMensagem(salaId, mensagensRef);
+  };
+
+  document.getElementById("msgInput").addEventListener("keypress", function (e) {
+    if (e.key === "Enter") {
+      enviarMensagem(salaId, mensagensRef);
+    }
+  });
+
+  document.getElementById("sairBtn").onclick = function () {
+    sairDoChat(salaId);
+  };
+}
+
+function enviarMensagem(salaId, mensagensRef) {
+  const input = document.getElementById("msgInput");
+  const texto = input.value.trim();
+  if (texto) {
+    mensagensRef.push({
+      remetente: "Você",
+      texto: texto,
+      timestamp: Date.now()
+    });
+    input.value = "";
+  }
+}
+
+function sairDoChat(salaId) {
+  const salaRef = db.ref("salas/" + salaId);
+  salaRef.update({ encerrado: true });
+  alert("Pareamento cancelado: o usuário saiu do chat.");
+  location.reload();
+}
+
+// ==========================
+// Listeners iniciais
+// ==========================
 window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("nome").addEventListener("keyup", (e) => {
     if (e.key === "Enter") {
