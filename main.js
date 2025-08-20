@@ -156,37 +156,60 @@ function entrarNaFila() {
 // Funções do Chat
 // ==========================
 function mostrarChat(salaId, parceiroNome, parceiroTurma) {
-  document.getElementById("parearArea").style.display = "none";
+  // guarda o id da sala em uso
+  window.salaIdAtiva = salaId;
+
+  // mostra/oculta áreas
+  const parearArea = document.getElementById("parearArea");
+  if (parearArea) parearArea.style.display = "none";
   document.getElementById("chatArea").style.display = "block";
 
+  // título do chat
   document.getElementById("chatTitulo").innerText =
     "Chat com " + parceiroNome + " (" + parceiroTurma + ")";
 
-  const mensagensRef = db.ref("salas/" + salaId + "/mensagens");
+  // refs da sala
+  const salaRef = db.ref("salas/" + salaId);
+  const mensagensRef = salaRef.child("mensagens");
+  const encerradoRef = salaRef.child("encerrado");
+  const encerradoPorRef = salaRef.child("encerradoPor");
 
+  // ouvir mensagens novas
   mensagensRef.on("child_added", (snapshot) => {
     const msg = snapshot.val();
     const mensagensDiv = document.getElementById("mensagens");
     const novaMsg = document.createElement("p");
-    novaMsg.textContent = msg.remetente + ": " + msg.texto;
+    novaMsg.textContent = (msg.remetente || "Aluno") + ": " + msg.texto;
     mensagensDiv.appendChild(novaMsg);
     mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
   });
 
-  document.getElementById("enviarBtn").onclick = function () {
-    enviarMensagem(salaId, mensagensRef);
-  };
-
-  document.getElementById("msgInput").addEventListener("keypress", function (e) {
-    if (e.key === "Enter") {
-      enviarMensagem(salaId, mensagensRef);
+  // ouvir encerramento (se o parceiro sair, fecha aqui também)
+  encerradoRef.on("value", (snap) => {
+    if (snap.val() === true) {
+      mensagensRef.off();
+      encerradoRef.off();
+      alert("Pareamento cancelado: seu parceiro saiu do chat.");
+      location.reload();
     }
   });
 
+  // encerra automaticamente se este cliente desconectar
+  encerradoRef.onDisconnect().set(true);
+  encerradoPorRef.onDisconnect().set(idTemporario);
+
+  // botões
+  document.getElementById("enviarBtn").onclick = function () {
+    enviarMensagem(salaId, mensagensRef);
+  };
+  document.getElementById("msgInput").addEventListener("keypress", function (e) {
+    if (e.key === "Enter") enviarMensagem(salaId, mensagensRef);
+  });
   document.getElementById("sairBtn").onclick = function () {
     sairDoChat(salaId);
   };
 }
+
 
 function enviarMensagem(salaId, mensagensRef) {
   const input = document.getElementById("msgInput");
@@ -201,12 +224,23 @@ function enviarMensagem(salaId, mensagensRef) {
   }
 }
 
-function sairDoChat(salaId) {
+function sairDoChat(salaIdArg) {
+  const salaId = salaIdArg || window.salaIdAtiva;
+  if (!salaId) return;
+
   const salaRef = db.ref("salas/" + salaId);
-  salaRef.update({ encerrado: true });
-  alert("Pareamento cancelado: o usuário saiu do chat.");
-  location.reload();
+  // marca a sala como encerrada (fecha para ambos)
+  salaRef.update({ encerrado: true, encerradoPor: idTemporario })
+    .finally(() => {
+      try {
+        salaRef.child("mensagens").off();
+        salaRef.child("encerrado").off();
+      } catch (e) {}
+      alert("Você saiu do chat.");
+      location.reload();
+    });
 }
+
 
 // ==========================
 // Listeners iniciais
